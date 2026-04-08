@@ -11,6 +11,9 @@
     "type-check": "tsc --noEmit",
     "lint": "eslint ."
   },
+  "dependencies": {
+    "zod": "^3.24.0"
+  },
   "devDependencies": {
     "typescript": "^5.7.2"
   }
