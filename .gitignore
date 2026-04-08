@@ -14,8 +14,15 @@ dist/
 
 # Environment variables
 .env
+.env.*
 .env.local
 .env.*.local
+
+# Markdown docs
+*.md
+
+# Claude
+.claude/
 
 # Supabase local
 supabase/.branches/
