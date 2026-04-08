@@ -1,0 +1,27 @@
+@import "tailwindcss";
+
+@theme {
+  /* ROKKA Brand Colors */
+  --color-rokka-cyan: #00e5ff;
+  --color-rokka-purple: #d500f9;
+  --color-rokka-fire: #ff4500;
+  --color-rokka-red: #ff1744;
+  --color-rokka-green: #00e676;
+  --color-rokka-gold: #ffd700;
+  --color-rokka-orange: #ff6d00;
+
+  /* Dark UI */
+  --color-background: #0a0a0a;
+  --color-card: #111111;
+  --color-border: #1a1a1a;
+
+  /* Font */
+  --font-sans: "Outfit", sans-serif;
+}
+
+html,
+body {
+  background-color: var(--color-background);
+  color: #ffffff;
+  -webkit-font-smoothing: antialiased;
+}

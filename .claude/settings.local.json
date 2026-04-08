@@ -1,0 +1,19 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pnpm add:*)",
+      "Bash(pnpm approve-builds:*)",
+      "Bash(supabase --version)",
+      "Bash(npm install:*)",
+      "Bash(scoop --version)",
+      "Bash(winget --version)",
+      "Bash(scoop install:*)",
+      "Bash(powershell -Command \"scoop install supabase\")",
+      "Bash(powershell -Command \"winget install Supabase.CLI\")",
+      "Bash(npx supabase:*)",
+      "Bash(pnpm install:*)",
+      "Bash(npx tsc:*)",
+      "Bash(wc -l \"D:/Cloud/OneDrive/2026-D/Desarrollo/Rokka/supabase/migrations/\"*.sql)"
+    ]
+  }
+}
