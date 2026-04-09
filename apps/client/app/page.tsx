@@ -1,12 +1,14 @@
 'use client'
 
 import { useState } from 'react'
-import { useTableContext } from '@/providers/TableProvider'
-import { Header }        from '@/components/Header'
-import { PinnedMessage } from '@/components/PinnedMessage'
-import { StatusBar }     from '@/components/StatusBar'
-import { TabBar, type Tab } from '@/components/TabBar'
-import { QueueTab }      from '@/components/tabs/QueueTab'
+import { useTableContext }       from '@/providers/TableProvider'
+import { Header }                from '@/components/Header'
+import { PinnedMessage }         from '@/components/PinnedMessage'
+import { StatusBar }             from '@/components/StatusBar'
+import { TabBar, type Tab }      from '@/components/TabBar'
+import { QueueTab }              from '@/components/tabs/QueueTab'
+import { ChatTab }               from '@/components/tabs/ChatTab'
+import { FloatingReactions }     from '@/components/FloatingReactions'
 
 // ── Placeholders for tabs not yet implemented ─────────────────────────────────
 
@@ -20,11 +22,14 @@ function SectionPlaceholder({ emoji, label }: { emoji: string; label: string }) 
   )
 }
 
+// Chat tab fills the entire content area (handles its own inner scroll)
+const FILLS_SPACE: Partial<Record<Tab, true>> = { chat: true }
+
 const TAB_CONTENT: Record<Tab, React.ComponentType> = {
   queue:  QueueTab,
   genre:  () => <SectionPlaceholder emoji="🎸" label="Explorar por géneros" />,
   top:    () => <SectionPlaceholder emoji="⭐" label="Top canciones del bar" />,
-  chat:   () => <SectionPlaceholder emoji="💬" label="Chat en vivo" />,
+  chat:   ChatTab,
   search: () => <SectionPlaceholder emoji="🔍" label="Buscar canciones" />,
 }
 
@@ -46,6 +51,8 @@ export default function HomePage() {
   }
 
   const ActiveSection = TAB_CONTENT[activeTab]
+  // Chat manages its own internal scroll — disable outer scroll when active
+  const fillsSpace = FILLS_SPACE[activeTab] ?? false
 
   return (
     <div className="h-[100dvh] flex flex-col bg-background overflow-hidden">
@@ -53,12 +60,18 @@ export default function HomePage() {
       <PinnedMessage />
       <StatusBar />
 
-      {/* Scrollable content */}
-      <main className="flex-1 overflow-y-auto overscroll-none">
+      <main
+        className={`flex-1 overscroll-none min-h-0 ${
+          fillsSpace ? 'overflow-hidden flex flex-col' : 'overflow-y-auto'
+        }`}
+      >
         <ActiveSection />
       </main>
 
       <TabBar activeTab={activeTab} onTabChange={setActiveTab} />
+
+      {/* Floating reaction particles — fixed overlay, pointer-events none */}
+      <FloatingReactions />
     </div>
   )
 }
