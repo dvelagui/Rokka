@@ -6,31 +6,26 @@ import { Header }        from '@/components/Header'
 import { PinnedMessage } from '@/components/PinnedMessage'
 import { StatusBar }     from '@/components/StatusBar'
 import { TabBar, type Tab } from '@/components/TabBar'
+import { QueueTab }      from '@/components/tabs/QueueTab'
 
-// ── Placeholders for each tab section (replaced in Phase 2) ──────────────────
-
-function QueueSection()  { return <SectionPlaceholder emoji="🎵" label="Cola de canciones" /> }
-function GenreSection()  { return <SectionPlaceholder emoji="🎸" label="Explorar por géneros" /> }
-function TopSection()    { return <SectionPlaceholder emoji="⭐" label="Top canciones del bar" /> }
-function ChatSection()   { return <SectionPlaceholder emoji="💬" label="Chat en vivo" /> }
-function SearchSection() { return <SectionPlaceholder emoji="🔍" label="Buscar canciones" /> }
+// ── Placeholders for tabs not yet implemented ─────────────────────────────────
 
 function SectionPlaceholder({ emoji, label }: { emoji: string; label: string }) {
   return (
     <div className="flex flex-col items-center justify-center min-h-[50vh] gap-3 text-center px-4">
       <span className="text-5xl">{emoji}</span>
       <p className="text-white/30 text-sm">{label}</p>
-      <p className="text-white/15 text-xs">Próximamente — Fase 2</p>
+      <p className="text-white/15 text-xs">Próximamente</p>
     </div>
   )
 }
 
 const TAB_CONTENT: Record<Tab, React.ComponentType> = {
-  queue:  QueueSection,
-  genre:  GenreSection,
-  top:    TopSection,
-  chat:   ChatSection,
-  search: SearchSection,
+  queue:  QueueTab,
+  genre:  () => <SectionPlaceholder emoji="🎸" label="Explorar por géneros" />,
+  top:    () => <SectionPlaceholder emoji="⭐" label="Top canciones del bar" />,
+  chat:   () => <SectionPlaceholder emoji="💬" label="Chat en vivo" />,
+  search: () => <SectionPlaceholder emoji="🔍" label="Buscar canciones" />,
 }
 
 // ── Main page ─────────────────────────────────────────────────────────────────

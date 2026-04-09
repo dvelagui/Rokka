@@ -17,6 +17,9 @@
   --color-border: #1a1a1a;
   --color-muted: #555555;
 
+  /* Fire gradient scale */
+  --color-fire2: #ff8c00;
+
   /* Font */
   --font-sans: "Outfit", sans-serif;
 }
@@ -40,4 +43,13 @@ body {
 
 .animate-fade-in {
   animation: fade-in 0.2s ease forwards;
+}
+
+@keyframes fire-pulse {
+  0%, 100% { box-shadow: 0 0 6px 1px rgba(255, 69, 0, 0.5); }
+  50%       { box-shadow: 0 0 14px 3px rgba(255, 69, 0, 0.8); }
+}
+
+.animate-fire-pulse {
+  animation: fire-pulse 1.6s ease-in-out infinite;
 }
