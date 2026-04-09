@@ -39,8 +39,6 @@ export interface MenuCategory {
 export async function getMenu(barId: string, adminView = false): Promise<MenuCategory[]> {
   const supabase = getSupabaseBrowserClient()
 
-  const itemFilter = adminView ? 'menu_items(*)' : 'menu_items(*)'
-
   const { data, error } = await supabase
     .from('menu_categories')
     .select(`
@@ -57,17 +55,30 @@ export async function getMenu(barId: string, adminView = false): Promise<MenuCat
 
   if (error) throw new Error(error.message)
 
-  return ((data ?? []) as MenuCategory[]).map((cat) => ({
-    ...cat,
-    subcategories: (cat.subcategories ?? [])
+  // Supabase returns the nested relation as `menu_subcategories` / `menu_items`
+  // (the actual table names). We remap them to the domain field names.
+  type RawItem = { id: string; bar_id: string; subcategory_id: string; name: string; price: number; is_available: boolean; sort_order: number }
+  type RawSub  = { id: string; category_id: string; name: string; sort_order: number; menu_items: RawItem[] }
+  type RawCat  = { id: string; bar_id: string; name: string; emoji: string; sort_order: number; menu_subcategories: RawSub[] }
+
+  return ((data ?? []) as unknown as RawCat[]).map((cat) => ({
+    id:         cat.id,
+    bar_id:     cat.bar_id,
+    name:       cat.name,
+    emoji:      cat.emoji,
+    sort_order: cat.sort_order,
+    subcategories: (cat.menu_subcategories ?? [])
       .sort((a, b) => a.sort_order - b.sort_order)
       .map((sub) => ({
-        ...sub,
-        items: ((sub.items ?? []) as MenuItem[])
+        id:          sub.id,
+        category_id: sub.category_id,
+        name:        sub.name,
+        sort_order:  sub.sort_order,
+        items: (sub.menu_items ?? [])
           .filter((item) => adminView || item.is_available)
           .sort((a, b) => a.sort_order - b.sort_order),
       })),
-  }))
+  } satisfies MenuCategory))
 }
 
 // ── Categorías ────────────────────────────────────────────────────────────────

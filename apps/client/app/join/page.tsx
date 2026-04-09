@@ -1,12 +1,24 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { Suspense, useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { validateTableSession, storeTableSession } from '@rokka/supabase'
 
-type Status = 'validating' | 'success' | 'error_invalid' | 'error_banned' | 'error_no_token'
+// ── Next.js 15 requiere Suspense alrededor de useSearchParams ─────────────────
 
 export default function JoinPage() {
+  return (
+    <Suspense fallback={<LoadingSpinner />}>
+      <JoinContent />
+    </Suspense>
+  )
+}
+
+// ── Contenido real ────────────────────────────────────────────────────────────
+
+type Status = 'validating' | 'success' | 'error_invalid' | 'error_banned' | 'error_no_token'
+
+function JoinContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [status, setStatus] = useState<Status>('validating')
@@ -35,7 +47,6 @@ export default function JoinPage() {
         setLabel(data.label)
         setStatus('success')
 
-        // Redirigir a la app principal tras un breve momento
         setTimeout(() => router.replace('/'), 1200)
       })
       .catch(() => setStatus('error_invalid'))
@@ -45,12 +56,7 @@ export default function JoinPage() {
     <main className="min-h-screen flex items-center justify-center bg-background px-4">
       <div className="text-center space-y-5 max-w-xs w-full">
 
-        {status === 'validating' && (
-          <>
-            <div className="w-12 h-12 rounded-full border-2 border-rokka-cyan border-t-transparent animate-spin mx-auto" />
-            <p className="text-white/40 text-sm">Validando sesión...</p>
-          </>
-        )}
+        {status === 'validating' && <LoadingSpinner />}
 
         {status === 'success' && (
           <>
@@ -90,6 +96,19 @@ export default function JoinPage() {
             message="Esta mesa ha sido bloqueada por el administrador del bar."
           />
         )}
+      </div>
+    </main>
+  )
+}
+
+// ── Componentes auxiliares ────────────────────────────────────────────────────
+
+function LoadingSpinner() {
+  return (
+    <main className="min-h-screen flex items-center justify-center bg-background">
+      <div className="text-center space-y-5">
+        <div className="w-12 h-12 rounded-full border-2 border-rokka-cyan border-t-transparent animate-spin mx-auto" />
+        <p className="text-white/40 text-sm">Validando sesión...</p>
       </div>
     </main>
   )
