@@ -4,7 +4,7 @@ import { useEffect, useState }  from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { getSupabaseBrowserClient } from '@rokka/supabase'
 import { useAddSong }               from '@/lib/use-add-song'
-import { AddSongModal }             from '@/components/queue/AddSongModal'
+import { DedicationModal }           from '@/components/modals/DedicationModal'
 import { WarningToast }             from '@/components/queue/WarningToast'
 import { useTableContext }           from '@/providers/TableProvider'
 
@@ -219,7 +219,7 @@ export function GenresTab() {
 
       <AnimatePresence>
         {addSong.pending && (
-          <AddSongModal
+          <DedicationModal
             key="add-modal"
             song={addSong.pending}
             isAdding={addSong.isAdding}

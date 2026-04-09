@@ -4,7 +4,7 @@ import { useState }          from 'react'
 import { AnimatePresence }   from 'framer-motion'
 import { useYouTubeSearch }  from '@rokka/supabase'
 import { useAddSong }        from '@/lib/use-add-song'
-import { AddSongModal }      from '@/components/queue/AddSongModal'
+import { DedicationModal }   from '@/components/modals/DedicationModal'
 import { WarningToast }      from '@/components/queue/WarningToast'
 
 export function SearchTab() {
@@ -112,7 +112,7 @@ export function SearchTab() {
       {/* Dedication modal */}
       <AnimatePresence>
         {addSong.pending && (
-          <AddSongModal
+          <DedicationModal
             key="add-modal"
             song={addSong.pending}
             isAdding={addSong.isAdding}

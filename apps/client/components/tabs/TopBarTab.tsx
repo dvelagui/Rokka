@@ -7,7 +7,7 @@ import type { TopSong }           from '@rokka/supabase'
 import { formatCredits }          from '@rokka/shared'
 import { HIGH_BID_THRESHOLD }     from '@rokka/shared'
 import { useAddSong }             from '@/lib/use-add-song'
-import { AddSongModal }           from '@/components/queue/AddSongModal'
+import { DedicationModal }         from '@/components/modals/DedicationModal'
 import { WarningToast }           from '@/components/queue/WarningToast'
 import { useTableContext }         from '@/providers/TableProvider'
 
@@ -124,7 +124,7 @@ export function TopBarTab() {
 
       <AnimatePresence>
         {addSong.pending && (
-          <AddSongModal
+          <DedicationModal
             key="add-modal"
             song={addSong.pending}
             isAdding={addSong.isAdding}
