@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { AnimatePresence }       from 'framer-motion'
 import { useTableContext }       from '@/providers/TableProvider'
 import { Header }                from '@/components/Header'
 import { PinnedMessage }         from '@/components/PinnedMessage'
@@ -12,6 +13,7 @@ import { SearchTab }             from '@/components/tabs/SearchTab'
 import { GenresTab }             from '@/components/tabs/GenresTab'
 import { TopBarTab }             from '@/components/tabs/TopBarTab'
 import { FloatingReactions }     from '@/components/FloatingReactions'
+import { MenuSheet }             from '@/components/menu/MenuSheet'
 
 // Chat tab fills the entire content area (handles its own inner scroll)
 const FILLS_SPACE: Partial<Record<Tab, true>> = { chat: true }
@@ -28,7 +30,8 @@ const TAB_CONTENT: Record<Tab, React.ComponentType> = {
 
 export default function HomePage() {
   const { isLoading } = useTableContext()
-  const [activeTab, setActiveTab] = useState<Tab>('queue')
+  const [activeTab, setActiveTab]   = useState<Tab>('queue')
+  const [menuOpen, setMenuOpen]     = useState(false)
 
   if (isLoading) {
     return (
@@ -47,7 +50,7 @@ export default function HomePage() {
 
   return (
     <div className="h-[100dvh] flex flex-col bg-background overflow-hidden">
-      <Header />
+      <Header onMenuClick={() => setMenuOpen(true)} />
       <PinnedMessage />
       <StatusBar />
 
@@ -63,6 +66,13 @@ export default function HomePage() {
 
       {/* Floating reaction particles — fixed overlay, pointer-events none */}
       <FloatingReactions />
+
+      {/* Menu sheet */}
+      <AnimatePresence>
+        {menuOpen && (
+          <MenuSheet key="menu-sheet" onClose={() => setMenuOpen(false)} />
+        )}
+      </AnimatePresence>
     </div>
   )
 }
