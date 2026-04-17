@@ -5,7 +5,7 @@
 
 -- ── Extensiones ───────────────────────────────────────────────────────────────
 
-CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+-- gen_random_uuid() reemplazado por gen_random_uuid() (nativo PG13+, sin extensión)
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
 -- ── Enums ─────────────────────────────────────────────────────────────────────
@@ -19,7 +19,7 @@ CREATE TYPE order_status      AS ENUM ('pending', 'confirmed', 'preparing', 'del
 -- ── Tabla: bars ───────────────────────────────────────────────────────────────
 
 CREATE TABLE bars (
-  id         UUID        PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id         UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
   name       TEXT        NOT NULL,
   emoji      TEXT        NOT NULL DEFAULT '🎵',
   logo_url   TEXT,
@@ -41,7 +41,7 @@ CREATE TABLE bars (
 -- ── Tabla: tables (mesas) ─────────────────────────────────────────────────────
 
 CREATE TABLE tables (
-  id             UUID        PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id             UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
   bar_id         UUID        NOT NULL REFERENCES bars(id) ON DELETE CASCADE,
   number         INT         NOT NULL,
   label          TEXT        NOT NULL,
@@ -57,7 +57,7 @@ CREATE TABLE tables (
 -- ── Tabla: queue (cola de canciones) ─────────────────────────────────────────
 
 CREATE TABLE queue (
-  id               UUID          PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id               UUID          PRIMARY KEY DEFAULT gen_random_uuid(),
   bar_id           UUID          NOT NULL REFERENCES bars(id) ON DELETE CASCADE,
   title            TEXT          NOT NULL,
   artist           TEXT          NOT NULL,
@@ -75,7 +75,7 @@ CREATE TABLE queue (
 -- ── Tabla: votes ──────────────────────────────────────────────────────────────
 
 CREATE TABLE votes (
-  id         UUID       PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id         UUID       PRIMARY KEY DEFAULT gen_random_uuid(),
   queue_id   UUID       NOT NULL REFERENCES queue(id) ON DELETE CASCADE,
   table_id   UUID       NOT NULL REFERENCES tables(id) ON DELETE CASCADE,
   vote_type  vote_type  NOT NULL,
@@ -86,7 +86,7 @@ CREATE TABLE votes (
 -- ── Tabla: chat_messages ──────────────────────────────────────────────────────
 
 CREATE TABLE chat_messages (
-  id           UUID          PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id           UUID          PRIMARY KEY DEFAULT gen_random_uuid(),
   bar_id       UUID          NOT NULL REFERENCES bars(id) ON DELETE CASCADE,
   table_id     UUID          REFERENCES tables(id) ON DELETE SET NULL,
   message      TEXT          NOT NULL CHECK (char_length(message) <= 280),
@@ -98,7 +98,7 @@ CREATE TABLE chat_messages (
 -- ── Tabla: credits_transactions ───────────────────────────────────────────────
 
 CREATE TABLE credits_transactions (
-  id           UUID              PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id           UUID              PRIMARY KEY DEFAULT gen_random_uuid(),
   bar_id       UUID              NOT NULL REFERENCES bars(id) ON DELETE CASCADE,
   table_id     UUID              NOT NULL REFERENCES tables(id) ON DELETE CASCADE,
   amount       INT               NOT NULL,
@@ -112,7 +112,7 @@ CREATE TABLE credits_transactions (
 -- ── Tabla: waiters (meseros) ──────────────────────────────────────────────────
 
 CREATE TABLE waiters (
-  id         UUID        PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id         UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
   bar_id     UUID        NOT NULL REFERENCES bars(id) ON DELETE CASCADE,
   name       TEXT        NOT NULL,
   phone      TEXT,
@@ -125,7 +125,7 @@ CREATE TABLE waiters (
 -- ── Tabla: menu_categories ────────────────────────────────────────────────────
 
 CREATE TABLE menu_categories (
-  id         UUID  PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id         UUID  PRIMARY KEY DEFAULT gen_random_uuid(),
   bar_id     UUID  NOT NULL REFERENCES bars(id) ON DELETE CASCADE,
   name       TEXT  NOT NULL,
   emoji      TEXT  NOT NULL DEFAULT '🍽️',
@@ -135,7 +135,7 @@ CREATE TABLE menu_categories (
 -- ── Tabla: menu_subcategories ─────────────────────────────────────────────────
 
 CREATE TABLE menu_subcategories (
-  id          UUID  PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id          UUID  PRIMARY KEY DEFAULT gen_random_uuid(),
   category_id UUID  NOT NULL REFERENCES menu_categories(id) ON DELETE CASCADE,
   name        TEXT  NOT NULL,
   sort_order  INT   NOT NULL DEFAULT 0
@@ -144,7 +144,7 @@ CREATE TABLE menu_subcategories (
 -- ── Tabla: menu_items ─────────────────────────────────────────────────────────
 
 CREATE TABLE menu_items (
-  id             UUID    PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id             UUID    PRIMARY KEY DEFAULT gen_random_uuid(),
   subcategory_id UUID    NOT NULL REFERENCES menu_subcategories(id) ON DELETE CASCADE,
   bar_id         UUID    NOT NULL REFERENCES bars(id) ON DELETE CASCADE,
   name           TEXT    NOT NULL,
@@ -156,7 +156,7 @@ CREATE TABLE menu_items (
 -- ── Tabla: orders ─────────────────────────────────────────────────────────────
 
 CREATE TABLE orders (
-  id         UUID         PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id         UUID         PRIMARY KEY DEFAULT gen_random_uuid(),
   bar_id     UUID         NOT NULL REFERENCES bars(id) ON DELETE CASCADE,
   table_id   UUID         NOT NULL REFERENCES tables(id) ON DELETE CASCADE,
   items      JSONB        NOT NULL DEFAULT '[]',
@@ -170,7 +170,7 @@ CREATE TABLE orders (
 -- ── Tabla: ads ────────────────────────────────────────────────────────────────
 
 CREATE TABLE ads (
-  id               UUID    PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id               UUID    PRIMARY KEY DEFAULT gen_random_uuid(),
   bar_id           UUID    NOT NULL REFERENCES bars(id) ON DELETE CASCADE,
   emoji            TEXT    NOT NULL DEFAULT '📢',
   title            TEXT    NOT NULL,
@@ -186,7 +186,7 @@ CREATE TABLE ads (
 -- ── Tabla: genres ─────────────────────────────────────────────────────────────
 
 CREATE TABLE genres (
-  id     UUID  PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id     UUID  PRIMARY KEY DEFAULT gen_random_uuid(),
   bar_id UUID  NOT NULL REFERENCES bars(id) ON DELETE CASCADE,
   name   TEXT  NOT NULL,
   emoji  TEXT  NOT NULL DEFAULT '🎵',
@@ -196,7 +196,7 @@ CREATE TABLE genres (
 -- ── Tabla: genre_songs ────────────────────────────────────────────────────────
 
 CREATE TABLE genre_songs (
-  id               UUID  PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id               UUID  PRIMARY KEY DEFAULT gen_random_uuid(),
   genre_id         UUID  NOT NULL REFERENCES genres(id) ON DELETE CASCADE,
   title            TEXT  NOT NULL,
   artist           TEXT  NOT NULL,
@@ -206,7 +206,7 @@ CREATE TABLE genre_songs (
 -- ── Tabla: favorites ──────────────────────────────────────────────────────────
 
 CREATE TABLE favorites (
-  id               UUID        PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id               UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
   bar_id           UUID        NOT NULL REFERENCES bars(id) ON DELETE CASCADE,
   title            TEXT        NOT NULL,
   artist           TEXT        NOT NULL,
@@ -218,7 +218,7 @@ CREATE TABLE favorites (
 -- ── Tabla: blocked_songs (vetadas) ────────────────────────────────────────────
 
 CREATE TABLE blocked_songs (
-  id         UUID        PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id         UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
   bar_id     UUID        NOT NULL REFERENCES bars(id) ON DELETE CASCADE,
   title      TEXT        NOT NULL,
   artist     TEXT        NOT NULL,
@@ -230,7 +230,7 @@ CREATE TABLE blocked_songs (
 -- ── Tabla: activity_log ───────────────────────────────────────────────────────
 
 CREATE TABLE activity_log (
-  id         UUID        PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id         UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
   bar_id     UUID        NOT NULL REFERENCES bars(id) ON DELETE CASCADE,
   actor      TEXT        NOT NULL,
   action     TEXT        NOT NULL,
@@ -241,7 +241,7 @@ CREATE TABLE activity_log (
 -- ── Tabla: bar_stats (KPIs diarios) ──────────────────────────────────────────
 
 CREATE TABLE bar_stats (
-  id                 UUID  PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id                 UUID  PRIMARY KEY DEFAULT gen_random_uuid(),
   bar_id             UUID  NOT NULL REFERENCES bars(id) ON DELETE CASCADE,
   date               DATE  NOT NULL,
   total_bids         INT   NOT NULL DEFAULT 0,
