@@ -69,3 +69,14 @@ body {
 /* Scrollbar hide utility */
 .no-scrollbar::-webkit-scrollbar { display: none }
 .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none }
+
+/* QR Scanner scanline */
+@keyframes scanline {
+  0%   { top: 0% }
+  50%  { top: calc(100% - 2px) }
+  100% { top: 0% }
+}
+
+.animate-scanline {
+  animation: scanline 1.5s ease-in-out infinite;
+}

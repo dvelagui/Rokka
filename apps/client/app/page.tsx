@@ -14,6 +14,7 @@ import { GenresTab }             from '@/components/tabs/GenresTab'
 import { TopBarTab }             from '@/components/tabs/TopBarTab'
 import { FloatingReactions }     from '@/components/FloatingReactions'
 import { MenuSheet }             from '@/components/menu/MenuSheet'
+import { QRScanner }             from '@/components/scanner/QRScanner'
 
 // Chat tab fills the entire content area (handles its own inner scroll)
 const FILLS_SPACE: Partial<Record<Tab, true>> = { chat: true }
@@ -32,6 +33,7 @@ export default function HomePage() {
   const { isLoading } = useTableContext()
   const [activeTab, setActiveTab]   = useState<Tab>('queue')
   const [menuOpen, setMenuOpen]     = useState(false)
+  const [scannerOpen, setScannerOpen] = useState(false)
 
   if (isLoading) {
     return (
@@ -50,7 +52,7 @@ export default function HomePage() {
 
   return (
     <div className="h-[100dvh] flex flex-col bg-background overflow-hidden">
-      <Header onMenuClick={() => setMenuOpen(true)} />
+      <Header onMenuClick={() => setMenuOpen(true)} onRechargeClick={() => setScannerOpen(true)} />
       <PinnedMessage />
       <StatusBar />
 
@@ -71,6 +73,13 @@ export default function HomePage() {
       <AnimatePresence>
         {menuOpen && (
           <MenuSheet key="menu-sheet" onClose={() => setMenuOpen(false)} />
+        )}
+      </AnimatePresence>
+
+      {/* QR Scanner */}
+      <AnimatePresence>
+        {scannerOpen && (
+          <QRScanner key="qr-scanner" onClose={() => setScannerOpen(false)} />
         )}
       </AnimatePresence>
     </div>
