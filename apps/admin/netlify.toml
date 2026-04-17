@@ -1,0 +1,11 @@
+[build]
+  base    = "apps/admin"
+  command = "cd ../.. && pnpm install --frozen-lockfile && pnpm --filter @rokka/admin build"
+  publish = ".next"
+
+[build.environment]
+  NODE_VERSION = "20"
+  PNPM_VERSION = "9.15.0"
+
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
