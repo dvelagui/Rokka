@@ -61,6 +61,7 @@ export {
   getTransactionHistory,
   initiateRecharge,
   confirmRecharge,
+  getTransactionByQrCode,
   deductCredits,
   refundCredits,
 } from './queries/credits'

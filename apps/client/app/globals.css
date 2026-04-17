@@ -20,6 +20,10 @@
   /* Fire gradient scale */
   --color-fire2: #ff8c00;
 
+  /* Podium medals */
+  --color-silver: #c0c0c0;
+  --color-bronze: #cd7f32;
+
   /* Font */
   --font-sans: "Outfit", sans-serif;
 }
@@ -52,4 +56,27 @@ body {
 
 .animate-fire-pulse {
   animation: fire-pulse 1.6s ease-in-out infinite;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0)    }
+  20%       { transform: translateX(-8px) }
+  40%       { transform: translateX(8px)  }
+  60%       { transform: translateX(-5px) }
+  80%       { transform: translateX(5px)  }
+}
+
+/* Scrollbar hide utility */
+.no-scrollbar::-webkit-scrollbar { display: none }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none }
+
+/* QR Scanner scanline */
+@keyframes scanline {
+  0%   { top: 0% }
+  50%  { top: calc(100% - 2px) }
+  100% { top: 0% }
+}
+
+.animate-scanline {
+  animation: scanline 1.5s ease-in-out infinite;
 }

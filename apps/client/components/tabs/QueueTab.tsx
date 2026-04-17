@@ -1,48 +1,14 @@
 'use client'
 
-import { useState } from 'react'
-import { useRealtime } from '@rokka/supabase'
+import { useState }              from 'react'
+import { AnimatePresence }        from 'framer-motion'
+import { useRealtime }            from '@rokka/supabase'
 import type { QueueItemWithVotes } from '@rokka/supabase'
-import { NowPlaying }     from '@/components/queue/NowPlaying'
-import { VotingSection }  from '@/components/queue/VotingSection'
-import { QueueList }      from '@/components/queue/QueueList'
-import { useTableContext } from '@/providers/TableProvider'
-
-// ── Bid modal (placeholder until Paso 6) ─────────────────────────────────────
-
-function BidModalPlaceholder({
-  song,
-  onClose,
-}: {
-  song:    QueueItemWithVotes
-  onClose: () => void
-}) {
-  return (
-    <div
-      className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 backdrop-blur-sm"
-      onClick={onClose}
-    >
-      <div
-        className="w-full max-w-md bg-card border border-border rounded-t-2xl p-6 space-y-4"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="flex items-center justify-between">
-          <p className="text-white font-bold">⬆ Subir en la cola</p>
-          <button
-            onClick={onClose}
-            className="text-white/30 hover:text-white/60 text-lg leading-none"
-          >
-            ✕
-          </button>
-        </div>
-        <p className="text-white/60 text-sm line-clamp-1">{song.title}</p>
-        <p className="text-white/30 text-xs text-center py-4">
-          Sistema de pujas — disponible en la siguiente fase
-        </p>
-      </div>
-    </div>
-  )
-}
+import { NowPlaying }             from '@/components/queue/NowPlaying'
+import { VotingSection }          from '@/components/queue/VotingSection'
+import { QueueList }              from '@/components/queue/QueueList'
+import { BidModal }               from '@/components/modals/BidModal'
+import { useTableContext }         from '@/providers/TableProvider'
 
 // ── QueueTab ──────────────────────────────────────────────────────────────────
 
@@ -84,9 +50,15 @@ export function QueueTab() {
       </div>
 
       {/* Bid modal */}
-      {bidSong && (
-        <BidModalPlaceholder song={bidSong} onClose={() => setBidSong(null)} />
-      )}
+      <AnimatePresence>
+        {bidSong && (
+          <BidModal
+            key="bid-modal"
+            song={bidSong}
+            onClose={() => setBidSong(null)}
+          />
+        )}
+      </AnimatePresence>
     </>
   )
 }

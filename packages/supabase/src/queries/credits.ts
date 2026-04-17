@@ -102,6 +102,24 @@ export async function confirmRecharge(
 }
 
 /**
+ * Cliente: busca una transacción por su código QR para mostrar el monto
+ * antes de confirmar la recarga.
+ */
+export async function getTransactionByQrCode(
+  qrCode: string,
+): Promise<CreditTransaction | null> {
+  const supabase = getSupabaseBrowserClient()
+  const { data, error } = await supabase
+    .from('credits_transactions')
+    .select('*')
+    .eq('qr_code', qrCode)
+    .eq('status', 'pending')
+    .single()
+  if (error) return null
+  return (data ?? null) as CreditTransaction | null
+}
+
+/**
  * Interno: descuenta créditos de una mesa (usado por pujas).
  * Verifica saldo suficiente antes de descontar.
  * Retorna el nuevo saldo.

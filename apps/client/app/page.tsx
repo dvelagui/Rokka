@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { AnimatePresence }       from 'framer-motion'
 import { useTableContext }       from '@/providers/TableProvider'
 import { Header }                from '@/components/Header'
 import { PinnedMessage }         from '@/components/PinnedMessage'
@@ -8,36 +9,31 @@ import { StatusBar }             from '@/components/StatusBar'
 import { TabBar, type Tab }      from '@/components/TabBar'
 import { QueueTab }              from '@/components/tabs/QueueTab'
 import { ChatTab }               from '@/components/tabs/ChatTab'
+import { SearchTab }             from '@/components/tabs/SearchTab'
+import { GenresTab }             from '@/components/tabs/GenresTab'
+import { TopBarTab }             from '@/components/tabs/TopBarTab'
 import { FloatingReactions }     from '@/components/FloatingReactions'
-
-// ── Placeholders for tabs not yet implemented ─────────────────────────────────
-
-function SectionPlaceholder({ emoji, label }: { emoji: string; label: string }) {
-  return (
-    <div className="flex flex-col items-center justify-center min-h-[50vh] gap-3 text-center px-4">
-      <span className="text-5xl">{emoji}</span>
-      <p className="text-white/30 text-sm">{label}</p>
-      <p className="text-white/15 text-xs">Próximamente</p>
-    </div>
-  )
-}
+import { MenuSheet }             from '@/components/menu/MenuSheet'
+import { QRScanner }             from '@/components/scanner/QRScanner'
 
 // Chat tab fills the entire content area (handles its own inner scroll)
 const FILLS_SPACE: Partial<Record<Tab, true>> = { chat: true }
 
 const TAB_CONTENT: Record<Tab, React.ComponentType> = {
   queue:  QueueTab,
-  genre:  () => <SectionPlaceholder emoji="🎸" label="Explorar por géneros" />,
-  top:    () => <SectionPlaceholder emoji="⭐" label="Top canciones del bar" />,
+  genre:  GenresTab,
+  top:    TopBarTab,
   chat:   ChatTab,
-  search: () => <SectionPlaceholder emoji="🔍" label="Buscar canciones" />,
+  search: SearchTab,
 }
 
 // ── Main page ─────────────────────────────────────────────────────────────────
 
 export default function HomePage() {
   const { isLoading } = useTableContext()
-  const [activeTab, setActiveTab] = useState<Tab>('queue')
+  const [activeTab, setActiveTab]   = useState<Tab>('queue')
+  const [menuOpen, setMenuOpen]     = useState(false)
+  const [scannerOpen, setScannerOpen] = useState(false)
 
   if (isLoading) {
     return (
@@ -56,7 +52,7 @@ export default function HomePage() {
 
   return (
     <div className="h-[100dvh] flex flex-col bg-background overflow-hidden">
-      <Header />
+      <Header onMenuClick={() => setMenuOpen(true)} onRechargeClick={() => setScannerOpen(true)} />
       <PinnedMessage />
       <StatusBar />
 
@@ -72,6 +68,20 @@ export default function HomePage() {
 
       {/* Floating reaction particles — fixed overlay, pointer-events none */}
       <FloatingReactions />
+
+      {/* Menu sheet */}
+      <AnimatePresence>
+        {menuOpen && (
+          <MenuSheet key="menu-sheet" onClose={() => setMenuOpen(false)} />
+        )}
+      </AnimatePresence>
+
+      {/* QR Scanner */}
+      <AnimatePresence>
+        {scannerOpen && (
+          <QRScanner key="qr-scanner" onClose={() => setScannerOpen(false)} />
+        )}
+      </AnimatePresence>
     </div>
   )
 }
