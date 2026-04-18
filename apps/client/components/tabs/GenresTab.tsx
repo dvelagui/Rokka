@@ -5,7 +5,6 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { getSupabaseBrowserClient } from '@rokka/supabase'
 import { useAddSong }               from '@/lib/use-add-song'
 import { DedicationModal }           from '@/components/modals/DedicationModal'
-import { WarningToast }             from '@/components/queue/WarningToast'
 import { useTableContext }           from '@/providers/TableProvider'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -135,8 +134,6 @@ export function GenresTab() {
 
   return (
     <>
-      <WarningToast message={addSong.warning} onDismiss={addSong.dismissWarning} />
-
       <div className="px-3 pt-3 pb-6">
         <AnimatePresence mode="wait">
           {/* ── Genre grid ── */}

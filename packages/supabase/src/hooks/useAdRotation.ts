@@ -7,8 +7,6 @@ import type { AdRow } from '../realtime/types'
 
 /** Muestra un anuncio cada N canciones reproducidas */
 const SONGS_PER_AD = 3
-/** O cada N segundos aunque no haya llegado al límite de canciones */
-const MAX_SECONDS_WITHOUT_AD = 2 * 60 // 2 minutos
 
 /**
  * Intercala anuncios propios y de terceros en un patrón 2:1.
@@ -37,6 +35,8 @@ export interface UseAdRotationReturn {
   countdown: number
   /** Cierra el anuncio manualmente */
   dismissAd: () => void
+  /** Muestra el siguiente anuncio de la rotación manualmente */
+  triggerAd: () => void
 }
 
 export function useAdRotation(barId: string | null): UseAdRotationReturn {
@@ -49,8 +49,7 @@ export function useAdRotation(barId: string | null): UseAdRotationReturn {
   const rotationRef      = useRef<AdRow[]>([])
   const adIndexRef       = useRef(0)
   const songCountRef     = useRef(0)
-  const countdownTimer   = useRef<ReturnType<typeof setInterval> | null>(null)
-  const timeTimer        = useRef<ReturnType<typeof setInterval> | null>(null)
+  const countdownTimer = useRef<ReturnType<typeof setInterval> | null>(null)
 
   // ── Load ads ───────────────────────────────────────────────────────────────
 
@@ -109,20 +108,6 @@ export function useAdRotation(barId: string | null): UseAdRotationReturn {
     songCountRef.current = 0
   }, [])
 
-  // ── Time-based trigger ─────────────────────────────────────────────────────
-
-  useEffect(() => {
-    if (!barId || rotationRef.current.length === 0) return
-
-    timeTimer.current = setInterval(() => {
-      if (!isShowingAd) showNextAd()
-    }, MAX_SECONDS_WITHOUT_AD * 1_000)
-
-    return () => {
-      if (timeTimer.current) clearInterval(timeTimer.current)
-    }
-  }, [barId, isShowingAd, showNextAd])
-
   // ── Song-count trigger via Supabase realtime ───────────────────────────────
 
   useEffect(() => {
@@ -174,9 +159,8 @@ export function useAdRotation(barId: string | null): UseAdRotationReturn {
     return () => {
       void supabase.removeChannel(channel)
       if (countdownTimer.current) clearInterval(countdownTimer.current)
-      if (timeTimer.current) clearInterval(timeTimer.current)
     }
   }, [barId, isShowingAd, showNextAd])
 
-  return { currentAd, isShowingAd, countdown, dismissAd }
+  return { currentAd, isShowingAd, countdown, dismissAd, triggerAd: showNextAd }
 }

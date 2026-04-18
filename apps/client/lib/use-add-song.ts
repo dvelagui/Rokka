@@ -3,6 +3,7 @@
 import { useState, useCallback } from 'react'
 import { useQueueActions, useRealtime } from '@rokka/supabase'
 import { useTableContext } from '@/providers/TableProvider'
+import { useToast } from '@/providers/ToastProvider'
 
 export interface SongToAdd {
   title:          string
@@ -13,30 +14,26 @@ export interface SongToAdd {
 
 export interface UseAddSongReturn {
   /** Song pending dedication confirmation, or null if no modal open */
-  pending:        SongToAdd | null
-  /** Validation warning to display, or null */
-  warning:        string | null
+  pending:    SongToAdd | null
   /** True while the queue RPC is in-flight */
-  isAdding:       boolean
+  isAdding:   boolean
   /** Start the add flow — validates first, then opens the modal */
-  initAdd:        (song: SongToAdd) => void
+  initAdd:    (song: SongToAdd) => void
   /** Called from modal with optional dedication text */
-  confirmAdd:     (dedication?: string) => Promise<void>
+  confirmAdd: (dedication?: string) => Promise<void>
   /** Cancel / close modal */
-  cancelAdd:      () => void
-  /** Dismiss the warning toast */
-  dismissWarning: () => void
+  cancelAdd:  () => void
   /** True if song (by videoId or title) is already in queue */
-  isInQueue:      (title: string, videoId?: string) => boolean
+  isInQueue:  (title: string, videoId?: string) => boolean
 }
 
 export function useAddSong(): UseAddSongReturn {
   const { table, bar, isBanned } = useTableContext()
   const { queue }                = useRealtime()
   const { addSong, isLoading }   = useQueueActions()
+  const { showWarning }          = useToast()
 
-  const [pending, setPending]   = useState<SongToAdd | null>(null)
-  const [warning, setWarning]   = useState<string | null>(null)
+  const [pending, setPending] = useState<SongToAdd | null>(null)
 
   const maxSongs    = bar?.config.max_canciones_por_mesa ?? 4
   const myQueueCount = queue.queue.filter(
@@ -55,20 +52,20 @@ export function useAddSong(): UseAddSongReturn {
   const initAdd = useCallback(
     (song: SongToAdd) => {
       if (isBanned) {
-        setWarning('⛔ Mesa baneada. No puedes agregar canciones.')
+        showWarning('⛔ Mesa baneada. No puedes agregar canciones.')
         return
       }
       if (myQueueCount >= maxSongs) {
-        setWarning(`⚠️ Ya tienes ${maxSongs} canciones en cola.`)
+        showWarning(`⚠️ Ya tienes ${maxSongs} canciones en cola.`)
         return
       }
       if (isInQueue(song.title, song.youtubeVideoId)) {
-        setWarning(`⚠️ "${song.title}" ya está en la lista. No se repite.`)
+        showWarning(`⚠️ "${song.title}" ya está en la lista. No se repite.`)
         return
       }
       setPending(song)
     },
-    [isBanned, myQueueCount, maxSongs, isInQueue],
+    [isBanned, myQueueCount, maxSongs, isInQueue, showWarning],
   )
 
   const confirmAdd = useCallback(
@@ -86,23 +83,20 @@ export function useAddSong(): UseAddSongReturn {
         })
         setPending(null)
       } catch (e) {
-        setWarning(`Error al agregar: ${e instanceof Error ? e.message : 'Intenta de nuevo'}`)
+        showWarning(`Error al agregar: ${e instanceof Error ? e.message : 'Intenta de nuevo'}`)
       }
     },
     [pending, table, addSong],
   )
 
-  const cancelAdd      = useCallback(() => setPending(null), [])
-  const dismissWarning = useCallback(() => setWarning(null), [])
+  const cancelAdd = useCallback(() => setPending(null), [])
 
   return {
     pending,
-    warning,
-    isAdding:       isLoading,
+    isAdding:  isLoading,
     initAdd,
     confirmAdd,
     cancelAdd,
-    dismissWarning,
     isInQueue,
   }
 }

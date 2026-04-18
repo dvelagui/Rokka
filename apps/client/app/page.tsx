@@ -15,6 +15,7 @@ import { TopBarTab }             from '@/components/tabs/TopBarTab'
 import { FloatingReactions }     from '@/components/FloatingReactions'
 import { MenuSheet }             from '@/components/menu/MenuSheet'
 import { QRScanner }             from '@/components/scanner/QRScanner'
+import { AdPopup }               from '@/components/ads/AdPopup'
 
 // Chat tab fills the entire content area (handles its own inner scroll)
 const FILLS_SPACE: Partial<Record<Tab, true>> = { chat: true }
@@ -82,6 +83,9 @@ export default function HomePage() {
           <QRScanner key="qr-scanner" onClose={() => setScannerOpen(false)} />
         )}
       </AnimatePresence>
+
+      {/* Ad popup — mounts once, manages its own timing internally */}
+      <AdPopup />
     </div>
   )
 }
