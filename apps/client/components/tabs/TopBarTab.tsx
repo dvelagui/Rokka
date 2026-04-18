@@ -8,7 +8,6 @@ import { formatCredits }          from '@rokka/shared'
 import { HIGH_BID_THRESHOLD }     from '@rokka/shared'
 import { useAddSong }             from '@/lib/use-add-song'
 import { DedicationModal }         from '@/components/modals/DedicationModal'
-import { WarningToast }           from '@/components/queue/WarningToast'
 import { useTableContext }         from '@/providers/TableProvider'
 
 // ── Medal helpers ─────────────────────────────────────────────────────────────
@@ -56,8 +55,6 @@ export function TopBarTab() {
 
   return (
     <>
-      <WarningToast message={addSong.warning} onDismiss={addSong.dismissWarning} />
-
       <div className="px-3 pt-3 pb-6 space-y-2">
         <p className="text-white/40 text-[10px] font-semibold tracking-widest uppercase mb-3">
           Las más pedidas esta semana

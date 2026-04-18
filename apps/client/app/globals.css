@@ -70,6 +70,28 @@ body {
 .no-scrollbar::-webkit-scrollbar { display: none }
 .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none }
 
+/* Safe area inset utilities (iPhone notch / home indicator) */
+.pt-safe { padding-top: env(safe-area-inset-top, 0px) }
+.pb-safe { padding-bottom: env(safe-area-inset-bottom, 0px) }
+.mt-safe { margin-top: env(safe-area-inset-top, 0px) }
+
+/* Touch target helper — wraps small icons in a 44px hit area */
+.touch-target {
+  min-width: 44px;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Refund bounce (toast verde) */
+@keyframes refund-bounce {
+  0%   { transform: translateY(-6px) scale(1.03); opacity: 0 }
+  15%  { transform: translateY(0)    scale(1);    opacity: 1 }
+  85%  { transform: translateY(0)    scale(1);    opacity: 1 }
+  100% { transform: translateY(-6px) scale(0.97); opacity: 0 }
+}
+
 /* QR Scanner scanline */
 @keyframes scanline {
   0%   { top: 0% }

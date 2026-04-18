@@ -5,7 +5,6 @@ import { AnimatePresence }   from 'framer-motion'
 import { useYouTubeSearch }  from '@rokka/supabase'
 import { useAddSong }        from '@/lib/use-add-song'
 import { DedicationModal }   from '@/components/modals/DedicationModal'
-import { WarningToast }      from '@/components/queue/WarningToast'
 
 export function SearchTab() {
   const [query, setQuery]   = useState('')
@@ -19,8 +18,6 @@ export function SearchTab() {
 
   return (
     <>
-      <WarningToast message={addSong.warning} onDismiss={addSong.dismissWarning} />
-
       <div className="flex flex-col gap-3 px-3 pt-3 pb-6">
         {/* Search input */}
         <div className="relative">

@@ -3,6 +3,7 @@
 import { type ReactNode } from 'react'
 import { RealtimeProvider } from '@rokka/supabase'
 import { TableProvider, useTableContext } from './TableProvider'
+import { ToastProvider } from './ToastProvider'
 
 /**
  * Thin wrapper that reads barId from TableContext and passes it to
@@ -22,7 +23,11 @@ function RealtimeWrapper({ children }: { children: ReactNode }) {
 export function ClientProviders({ children }: { children: ReactNode }) {
   return (
     <TableProvider>
-      <RealtimeWrapper>{children}</RealtimeWrapper>
+      <RealtimeWrapper>
+        <ToastProvider>
+          {children}
+        </ToastProvider>
+      </RealtimeWrapper>
     </TableProvider>
   )
 }
