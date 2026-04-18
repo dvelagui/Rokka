@@ -56,8 +56,9 @@ export function TableProvider({ children }: { children: ReactNode }) {
   const pathname = usePathname()
   const { session, loading, error } = useTable()
 
-  const [bar, setBar]         = useState<BarPublicInfo | null>(null)
-  const [credits, setCredits] = useState(0)
+  const [bar, setBar]                   = useState<BarPublicInfo | null>(null)
+  const [credits, setCredits]           = useState(0)
+  const [midSessionBanned, setMidSessionBanned] = useState(false)
 
   // Sync credits from session (initial load) ───────────────────────────────
   useEffect(() => {
@@ -87,8 +88,9 @@ export function TableProvider({ children }: { children: ReactNode }) {
           filter: `id=eq.${session.tableId}`,
         },
         (payload) => {
-          const newCredits = (payload.new as Record<string, unknown>).credits
-          if (typeof newCredits === 'number') setCredits(newCredits)
+          const row = payload.new as Record<string, unknown>
+          if (typeof row.credits === 'number') setCredits(row.credits)
+          if (row.is_banned === true) setMidSessionBanned(true)
         },
       )
       .subscribe()
@@ -111,7 +113,7 @@ export function TableProvider({ children }: { children: ReactNode }) {
         bar,
         credits,
         isLoading: loading,
-        isBanned:  error === 'sesion_invalida',
+        isBanned:  error === 'sesion_invalida' || midSessionBanned,
         error,
       }}
     >

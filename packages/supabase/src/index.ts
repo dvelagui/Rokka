@@ -13,7 +13,8 @@ export {
   getStoredTableSession,
   clearTableSession,
 } from './auth/table'
-export type { TableSessionData, StoredTableSession } from './auth/table'
+export type { TableSessionData, StoredTableSession, TableCheckResult } from './auth/table'
+export { checkTableByToken } from './auth/table'
 
 // ── Auth: TV ──────────────────────────────────────────────────────────────────
 export {

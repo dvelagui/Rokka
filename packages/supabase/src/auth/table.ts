@@ -78,3 +78,35 @@ export function getStoredTableSession(): StoredTableSession | null {
 export function clearTableSession(): void {
   localStorage.removeItem(STORAGE_KEY)
 }
+
+// ── Discriminated check ───────────────────────────────────────────────────────
+
+export type TableCheckResult =
+  | { status: 'valid';    data: TableSessionData }
+  | { status: 'banned' | 'inactive' | 'not_found' }
+
+/**
+ * Versión extendida de validateTableSession que distingue entre
+ * mesa válida, baneada, inactiva y no encontrada.
+ * Usada en el flujo de /join para mostrar el error correcto.
+ */
+export async function checkTableByToken(token: string): Promise<TableCheckResult> {
+  const supabase = getSupabaseBrowserClient()
+  const { data, error } = await supabase.rpc('get_table_by_token', { p_token: token })
+  if (error || !data || (data as unknown[]).length === 0) return { status: 'not_found' }
+
+  const row = (data as Record<string, unknown>[])[0]
+  if (row.is_banned)   return { status: 'banned' }
+  if (!row.is_active)  return { status: 'inactive' }
+
+  return {
+    status: 'valid',
+    data: {
+      barId:       row.bar_id       as string,
+      tableId:     row.table_id     as string,
+      tableNumber: row.table_number as number,
+      label:       row.label        as string,
+      credits:     row.credits      as number,
+    },
+  }
+}

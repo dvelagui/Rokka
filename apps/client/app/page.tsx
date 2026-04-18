@@ -16,6 +16,7 @@ import { FloatingReactions }     from '@/components/FloatingReactions'
 import { MenuSheet }             from '@/components/menu/MenuSheet'
 import { QRScanner }             from '@/components/scanner/QRScanner'
 import { AdPopup }               from '@/components/ads/AdPopup'
+import { BannedBanner }          from '@/components/BannedBanner'
 
 // Chat tab fills the entire content area (handles its own inner scroll)
 const FILLS_SPACE: Partial<Record<Tab, true>> = { chat: true }
@@ -31,7 +32,7 @@ const TAB_CONTENT: Record<Tab, React.ComponentType> = {
 // ── Main page ─────────────────────────────────────────────────────────────────
 
 export default function HomePage() {
-  const { isLoading } = useTableContext()
+  const { isLoading, isBanned } = useTableContext()
   const [activeTab, setActiveTab]   = useState<Tab>('queue')
   const [menuOpen, setMenuOpen]     = useState(false)
   const [scannerOpen, setScannerOpen] = useState(false)
@@ -97,6 +98,11 @@ export default function HomePage() {
 
       {/* Ad popup — mounts once, manages its own timing internally */}
       <AdPopup />
+
+      {/* Mid-session ban banner */}
+      <AnimatePresence>
+        {isBanned && <BannedBanner key="banned-banner" />}
+      </AnimatePresence>
     </div>
   )
 }

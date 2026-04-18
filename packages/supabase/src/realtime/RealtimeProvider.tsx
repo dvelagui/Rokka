@@ -59,7 +59,7 @@ function ConnectionIndicator({ status }: ConnectionIndicatorProps) {
 
   return (
     <div
-      className={`fixed bottom-4 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-full
+      className={`fixed bottom-[calc(4.5rem+env(safe-area-inset-bottom,0px))] left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-full
         text-white text-sm font-medium shadow-lg flex items-center gap-2 ${bg}`}
       role="status"
       aria-live="polite"

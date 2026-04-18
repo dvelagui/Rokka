@@ -2,7 +2,7 @@
 
 import { Suspense, useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { validateTableSession, storeTableSession } from '@rokka/supabase'
+import { checkTableByToken, storeTableSession } from '@rokka/supabase'
 
 // ── Next.js 15 requiere Suspense alrededor de useSearchParams ─────────────────
 
@@ -32,19 +32,13 @@ function JoinContent() {
       return
     }
 
-    validateTableSession(token)
-      .then((data) => {
-        if (!data) {
-          setStatus('error_invalid')
-          return
-        }
-        if (data.credits === undefined) {
-          setStatus('error_banned')
-          return
-        }
+    checkTableByToken(token)
+      .then((result) => {
+        if (result.status === 'banned')   { setStatus('error_banned');  return }
+        if (result.status !== 'valid')    { setStatus('error_invalid'); return }
 
         storeTableSession(token)
-        setLabel(data.label)
+        setLabel(result.data.label)
         setStatus('success')
 
         setTimeout(() => router.replace('/'), 1200)
