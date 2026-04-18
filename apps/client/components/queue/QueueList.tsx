@@ -60,7 +60,7 @@ function QueueItem({ item, index, isMyMesa, avgSecs, onBid }: QueueItemProps) {
       layoutId={item.id}
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, x: -24 }}
+      exit={{ opacity: 0, x: -50 }}
       transition={{ layout: { type: 'spring', stiffness: 400, damping: 35 } }}
       className={`bg-card rounded-xl p-3 flex gap-3 items-start
                   ${BORDER_LEFT[level]}

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { AnimatePresence }       from 'framer-motion'
+import { AnimatePresence, motion } from 'framer-motion'
 import { useTableContext }       from '@/providers/TableProvider'
 import { Header }                from '@/components/Header'
 import { PinnedMessage }         from '@/components/PinnedMessage'
@@ -52,7 +52,7 @@ export default function HomePage() {
   const fillsSpace = FILLS_SPACE[activeTab] ?? false
 
   return (
-    <div className="h-[100dvh] flex flex-col bg-background overflow-hidden">
+    <div className="h-[100dvh] w-full max-w-[480px] mx-auto flex flex-col bg-background overflow-hidden">
       <Header onMenuClick={() => setMenuOpen(true)} onRechargeClick={() => setScannerOpen(true)} />
       <PinnedMessage />
       <StatusBar />
@@ -62,7 +62,18 @@ export default function HomePage() {
           fillsSpace ? 'overflow-hidden flex flex-col' : 'overflow-y-auto'
         }`}
       >
-        <ActiveSection />
+        <AnimatePresence mode="wait" initial={false}>
+          <motion.div
+            key={activeTab}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{   opacity: 0, y: -6 }}
+            transition={{ duration: 0.15, ease: 'easeOut' }}
+            className={fillsSpace ? 'flex-1 flex flex-col min-h-0 overflow-hidden' : undefined}
+          >
+            <ActiveSection />
+          </motion.div>
+        </AnimatePresence>
       </main>
 
       <TabBar activeTab={activeTab} onTabChange={setActiveTab} />

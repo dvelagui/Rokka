@@ -1,13 +1,40 @@
 'use client'
 
 import { useState }          from 'react'
-import { motion }             from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import type { QueueItemWithVotes } from '@rokka/supabase'
 import { useQueueActions }    from '@rokka/supabase'
 import { formatCredits }      from '@rokka/shared'
 import { useTableContext }     from '@/providers/TableProvider'
 
 const QUICK_AMOUNTS = [500, 1_000, 2_000, 5_000]
+
+// ── Confetti burst ─────────────────────────────────────────────────────────────
+
+const CONFETTI_PARTICLES = [
+  { x: -44, y: -60, rotate: -20, delay: 0    },
+  { x: -18, y: -72, rotate:   8, delay: 0.04 },
+  { x:  18, y: -68, rotate:  -8, delay: 0.02 },
+  { x:  44, y: -60, rotate:  20, delay: 0.06 },
+] as const
+
+function BidConfetti() {
+  return (
+    <div className="absolute inset-0 pointer-events-none flex items-center justify-center overflow-hidden">
+      {CONFETTI_PARTICLES.map((p, i) => (
+        <motion.span
+          key={i}
+          initial={{ y: 0, x: 0, opacity: 1, scale: 0.8 }}
+          animate={{ y: p.y, x: p.x, opacity: 0, scale: 1.6, rotate: p.rotate }}
+          transition={{ duration: 0.65, delay: p.delay, ease: 'easeOut' }}
+          className="absolute text-2xl select-none"
+        >
+          🔥
+        </motion.span>
+      ))}
+    </div>
+  )
+}
 
 export interface BidModalProps {
   song:    QueueItemWithVotes
@@ -19,8 +46,9 @@ export function BidModal({ song, onClose }: BidModalProps) {
   const { bidOnSong, isLoading } = useQueueActions()
 
   const minBid   = bar?.config?.min_bid ?? 500
-  const [custom, setCustom]     = useState('')
-  const [selected, setSelected] = useState<number | null>(null)
+  const [custom, setCustom]       = useState('')
+  const [selected, setSelected]   = useState<number | null>(null)
+  const [showConfetti, setShowConfetti] = useState(false)
 
   const amount = selected ?? (custom ? parseInt(custom, 10) : NaN)
   const isValid = !isNaN(amount) && amount >= minBid && amount <= (credits ?? 0)
@@ -45,7 +73,8 @@ export function BidModal({ song, onClose }: BidModalProps) {
         tableId: table.tableId,
         amount,
       })
-      onClose()
+      setShowConfetti(true)
+      setTimeout(onClose, 800)
     } catch {
       // error surfaced by useQueueActions internally
     }
@@ -65,9 +94,13 @@ export function BidModal({ song, onClose }: BidModalProps) {
         animate={{ scale: 1,    y: 0,  opacity: 1 }}
         exit={{   scale: 0.95, y: 20, opacity: 0 }}
         transition={{ type: 'spring', stiffness: 380, damping: 30 }}
-        className="w-full max-w-[320px] bg-card border border-border rounded-2xl p-5 space-y-4"
+        className="w-full max-w-[320px] bg-card border border-border rounded-2xl p-5 space-y-4 relative"
         onClick={(e) => e.stopPropagation()}
       >
+        {/* Confetti burst on bid success */}
+        <AnimatePresence>
+          {showConfetti && <BidConfetti key="confetti" />}
+        </AnimatePresence>
         {/* Header */}
         <div className="space-y-0.5 text-center">
           <p className="text-white font-extrabold text-sm">¿Cuánto quieres pujar?</p>
