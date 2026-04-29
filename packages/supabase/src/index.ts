@@ -74,8 +74,10 @@ export {
   updateCategory,
   deleteCategory,
   createSubcategory,
+  deleteSubcategory,
   createMenuItem,
   updateMenuItem,
+  deleteMenuItem,
   toggleItemAvailability,
 } from './queries/menu'
 export type { MenuItem, MenuSubcategory, MenuCategory } from './queries/menu'
@@ -115,6 +117,15 @@ export { makeNotification, HIGH_BID_THRESHOLD } from './queries/notifications'
 export type { AdminNotification, NotificationKind } from './queries/notifications'
 
 export { getAds, createAd, updateAd, deleteAd, toggleAdActive, reorderAds } from './queries/ads'
+
+export { getFavorites, addFavorite, removeFavorite, toggleFavorite } from './queries/favorites'
+export type { FavoriteSong } from './queries/favorites'
+
+export { getGenres, getGenreWithSongs, addSongToGenre, removeSongFromGenre, createGenre, deleteGenre } from './queries/genres'
+export type { GenreWithSongs } from './queries/genres'
+
+export { getPlayedSongs, getBlockedSongs, vetarCancion, adminAddToQueue } from './queries/history'
+export type { PlayedSong, BlockedSong } from './queries/history'
 
 export {
   getBarStats,

@@ -25,3 +25,35 @@ body {
   color: #ffffff;
   -webkit-font-smoothing: antialiased;
 }
+
+/* Bell ring animation */
+@keyframes bellring {
+  0%, 50%, 100% { transform: rotate(0deg); }
+  10%, 30%      { transform: rotate(-12deg); }
+  20%, 40%      { transform: rotate(12deg); }
+}
+
+.bell-ring {
+  animation: bellring 1.8s ease-in-out infinite;
+  transform-origin: 50% 0%;
+}
+
+/* Song playback progress bar */
+@keyframes playback {
+  from { width: 0%; }
+  to   { width: 100%; }
+}
+
+.playback-bar {
+  animation: playback linear forwards;
+}
+
+/* Fire glow for top-bid song */
+@keyframes fireglow {
+  0%, 100% { box-shadow: 0 0 6px #FF4500, 0 0 12px rgba(255,69,0,0.4); }
+  50%      { box-shadow: 0 0 10px #FF6500, 0 0 20px rgba(255,100,0,0.6); }
+}
+
+.fire-glow {
+  animation: fireglow 1.5s ease-in-out infinite;
+}
