@@ -12,7 +12,7 @@ import {
 import type { PlayedSong } from '@rokka/supabase'
 import type { GenresRow } from '@rokka/shared'
 import { useAdminContext } from '../../../providers/AdminProvider'
-import GenrePicker from '../GenrePicker'
+import GenreAssignModal from '../modals/GenreAssignModal'
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -202,13 +202,13 @@ export default function HistoryTab() {
         })}
       </div>
 
-      {pickerFor && (
-        <GenrePicker
-          genres={genres}
-          onSelect={handleAssignGenre}
-          onClose={() => setPickerFor(null)}
-        />
-      )}
+      <GenreAssignModal
+        isOpen={pickerFor !== null}
+        onClose={() => setPickerFor(null)}
+        genres={genres}
+        songTitle={pickerFor?.title}
+        onSelect={handleAssignGenre}
+      />
     </>
   )
 }

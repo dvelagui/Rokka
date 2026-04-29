@@ -28,7 +28,7 @@ import {
 import type { QueueItemWithVotes } from '@rokka/supabase'
 import type { GenresRow } from '@rokka/shared'
 import { useAdminContext } from '../../../providers/AdminProvider'
-import GenrePicker from '../GenrePicker'
+import GenreAssignModal from '../modals/GenreAssignModal'
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -312,13 +312,13 @@ export default function QueueTab() {
         <div className="text-center py-16 text-white/20 text-sm">Cola vacía</div>
       )}
 
-      {genrePickerFor && (
-        <GenrePicker
-          genres={genres}
-          onSelect={handleAssignGenre}
-          onClose={() => setGenrePickerFor(null)}
-        />
-      )}
+      <GenreAssignModal
+        isOpen={genrePickerFor !== null}
+        onClose={() => setGenrePickerFor(null)}
+        genres={genres}
+        songTitle={genrePickerFor?.title}
+        onSelect={handleAssignGenre}
+      />
     </div>
   )
 }
