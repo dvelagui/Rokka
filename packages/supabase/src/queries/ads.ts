@@ -33,6 +33,7 @@ export async function createAd(
     durationSeconds?: number
     isOwn?: boolean
     companyName?: string
+    isActive?: boolean
   },
 ): Promise<AdRow> {
   const supabase = getSupabaseBrowserClient()
@@ -47,7 +48,7 @@ export async function createAd(
       duration_seconds: data.durationSeconds ?? 8,
       is_own:           data.isOwn ?? true,
       company_name:     data.companyName ?? null,
-      is_active:        true,
+      is_active:        data.isActive ?? true,
     })
     .select()
     .single()
@@ -65,6 +66,7 @@ export async function updateAd(
     duration_seconds: number
     is_own: boolean
     company_name: string
+    is_active: boolean
   }>,
 ): Promise<void> {
   const supabase = getSupabaseBrowserClient()

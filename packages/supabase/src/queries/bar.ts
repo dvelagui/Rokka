@@ -24,6 +24,8 @@ export interface BarConfig {
   closing_time?: string
   /** Mensajes fijos recientes del admin (últimos 6, persisted in JSONB config) */
   pinned_history?: string[]
+  /** Mostrar anuncios de terceros en App y TV */
+  third_party_ads?: boolean
   /** Campos heredados del schema original */
   volumen_default?: number
   chat_habilitado?: boolean
