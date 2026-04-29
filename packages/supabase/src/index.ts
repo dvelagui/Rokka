@@ -134,8 +134,9 @@ export {
   getTopSongs,
   getGlobalTopSongs,
   getGlobalBarRanking,
+  getDailyRevenue,
 } from './queries/stats'
-export type { BarStatsSummary, TopSong, GlobalBarRanking, DateRange } from './queries/stats'
+export type { BarStatsSummary, TopSong, GlobalBarRanking, DateRange, DailyRevenue } from './queries/stats'
 
 // ── Services ──────────────────────────────────────────────────────────────────
 export { searchSongs, getVideoDetails, clearYoutubeCache } from './services/youtube'

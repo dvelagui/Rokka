@@ -15,6 +15,7 @@ import MenuTab from './tabs/MenuTab'
 import WaitersTab from './tabs/WaitersTab'
 import AdsTab from './tabs/AdsTab'
 import ConfigTab from './tabs/ConfigTab'
+import StatsTab from './tabs/StatsTab'
 
 export default function AdminDashboard() {
   return (
@@ -53,6 +54,7 @@ function TabContent({ tab }: { tab: TabId }) {
   if (tab === 'meseros')   return <WaitersTab />
   if (tab === 'anuncios')  return <AdsTab />
   if (tab === 'config')    return <ConfigTab />
+  if (tab === 'stats')     return <StatsTab />
 
   return (
     <div className="flex items-center justify-center py-12 text-white/20 text-sm">
