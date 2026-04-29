@@ -2,6 +2,16 @@ import { getSupabaseBrowserClient } from '../client'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
+export interface WaiterMovement {
+  id: string
+  type: 'order' | 'recharge'
+  table_id: string
+  amount: number
+  detail: string
+  status: string
+  created_at: string
+}
+
 export interface Waiter {
   id: string
   bar_id: string
@@ -47,10 +57,10 @@ export async function createWaiter(
   return pub as WaiterPublic
 }
 
-/** Actualizar datos del mesero. */
+/** Actualizar datos del mesero (pin opcional). */
 export async function updateWaiter(
   waiterId: string,
-  data: Partial<{ name: string; phone: string; shift: string }>,
+  data: Partial<{ name: string; phone: string; shift: string; pin: string }>,
 ): Promise<void> {
   const supabase = getSupabaseBrowserClient()
   const { error } = await supabase
@@ -106,4 +116,66 @@ export async function authenticateWaiter(
   if (error) throw new Error(error.message)
   const rows = data as WaiterPublic[] | null
   return (rows && rows.length > 0) ? rows[0] : null
+}
+
+/**
+ * Movimientos de un mesero: cruza órdenes (waiter_id) + recargas (verified_by).
+ * Retorna lista unificada ordenada por fecha desc.
+ */
+export async function getWaiterMovements(
+  barId: string,
+  waiterId: string,
+  limit = 60,
+): Promise<WaiterMovement[]> {
+  const supabase = getSupabaseBrowserClient()
+
+  const [ordersRes, txRes] = await Promise.all([
+    supabase
+      .from('orders')
+      .select('id, table_id, items, total, status, created_at')
+      .eq('bar_id', barId)
+      .eq('waiter_id', waiterId)
+      .order('created_at', { ascending: false })
+      .limit(limit),
+    supabase
+      .from('credits_transactions')
+      .select('id, table_id, amount, type, status, created_at')
+      .eq('bar_id', barId)
+      .eq('verified_by', waiterId)
+      .order('created_at', { ascending: false })
+      .limit(limit),
+  ])
+
+  const movements: WaiterMovement[] = []
+
+  for (const o of ordersRes.data ?? []) {
+    const items = (o.items as { name: string; qty: number }[]) ?? []
+    const detail = items
+      .slice(0, 2)
+      .map((i) => `${i.qty}× ${i.name}`)
+      .join(', ') + (items.length > 2 ? ' …' : '')
+    movements.push({
+      id:         o.id,
+      type:       'order',
+      table_id:   o.table_id,
+      amount:     o.total as number,
+      detail,
+      status:     o.status as string,
+      created_at: o.created_at as string,
+    })
+  }
+
+  for (const tx of txRes.data ?? []) {
+    movements.push({
+      id:         tx.id,
+      type:       'recharge',
+      table_id:   tx.table_id,
+      amount:     tx.amount as number,
+      detail:     'Recarga QR',
+      status:     tx.status as string,
+      created_at: tx.created_at as string,
+    })
+  }
+
+  return movements.sort((a, b) => b.created_at.localeCompare(a.created_at))
 }

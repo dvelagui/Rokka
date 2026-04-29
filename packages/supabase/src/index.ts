@@ -180,6 +180,8 @@ export type { UseTablesReturn } from './hooks/useTables'
 
 export { useWaiters } from './hooks/useWaiters'
 export type { UseWaitersReturn } from './hooks/useWaiters'
+export { getWaiterMovements } from './queries/waiters'
+export type { WaiterMovement } from './queries/waiters'
 
 export { useAdminNotifications } from './hooks/useAdminNotifications'
 export type { UseAdminNotificationsReturn } from './hooks/useAdminNotifications'
