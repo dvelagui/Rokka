@@ -82,7 +82,12 @@ export default function WaiterFormModal({ waiter, onSave, onClose }: Props) {
       )
       onClose()
     } catch (err) {
-      setApiError((err as Error).message)
+      const msg = (err as Error).message
+      if (msg.includes('duplicate') || msg.includes('23505') || msg.toLowerCase().includes('pin')) {
+        setApiError('Este PIN ya está siendo usado por otro mesero. Elige uno diferente.')
+      } else {
+        setApiError(msg)
+      }
     } finally {
       setSaving(false)
     }

@@ -29,6 +29,20 @@ export default function AdminHeader() {
   async function handleLogoUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     if (!file || !bar) return
+
+    // Validate type and size
+    const allowed = ['image/jpeg', 'image/png', 'image/webp']
+    if (!allowed.includes(file.type)) {
+      alert('Formato no soportado. Usa JPG, PNG o WebP.')
+      if (fileRef.current) fileRef.current.value = ''
+      return
+    }
+    if (file.size > 2 * 1024 * 1024) {
+      alert('El archivo debe pesar menos de 2 MB.')
+      if (fileRef.current) fileRef.current.value = ''
+      return
+    }
+
     setUploading(true)
     try {
       const supabase = getSupabaseBrowserClient()

@@ -19,7 +19,7 @@ export default function KPIStrip() {
   ]
 
   return (
-    <div className="grid grid-cols-4 border-b border-[#1a1a1a] bg-black">
+    <div className="grid grid-cols-2 sm:grid-cols-4 border-b border-[#1a1a1a] bg-black">
       {kpis.map(({ icon, label, value }) => (
         <div
           key={label}

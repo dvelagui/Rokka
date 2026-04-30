@@ -234,7 +234,7 @@ function YouTubeSection({
         <p className="text-center text-rokka-red/70 text-xs py-4">{error}</p>
       )}
       {!isSearching && results.length === 0 && query.length >= 3 && !error && (
-        <p className="text-center text-white/20 text-xs py-4">Sin resultados para "{query}"</p>
+        <p className="text-center text-white/20 text-xs py-4">{`Sin resultados para "${query}"`}</p>
       )}
       {!query && (
         <p className="text-center text-white/15 text-xs py-6">Escribe al menos 3 caracteres para buscar</p>
@@ -493,7 +493,7 @@ function GuardadasSection({
           Aún no hay canciones guardadas en géneros
         </p>
       ) : filtered.length === 0 ? (
-        <p className="text-center text-white/20 text-xs py-6">Sin resultados para "{filter}"</p>
+        <p className="text-center text-white/20 text-xs py-6">{`Sin resultados para "${filter}"`}</p>
       ) : (
         <div className="bg-card border border-[#1e1e1e] rounded-xl px-3">
           {filtered.map((s) => (

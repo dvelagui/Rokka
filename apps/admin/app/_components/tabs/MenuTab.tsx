@@ -251,7 +251,16 @@ function MenuSection({ barId }: { barId: string }) {
       </div>
 
       {menu.length === 0 && (
-        <p className="text-center text-white/20 text-xs py-8">Sin categorías. Crea una para empezar.</p>
+        <div className="flex flex-col items-center gap-3 py-12">
+          <span className="text-4xl">🍽️</span>
+          <p className="text-sm text-white/30 text-center">Tu menú está vacío</p>
+          <button
+            onClick={handleCreateCategory}
+            className="text-sm px-4 py-2 rounded-xl bg-rokka-cyan/15 border border-rokka-cyan/40 text-rokka-cyan font-semibold hover:bg-rokka-cyan/25 transition-colors"
+          >
+            + Agrega tu primer producto
+          </button>
+        </div>
       )}
 
       {menu.map((cat) => {

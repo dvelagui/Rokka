@@ -170,7 +170,7 @@ export default function HistoryTab() {
                   </div>
                   {song.dedication && (
                     <p className="text-[11px] text-white/30 italic mt-0.5 truncate">
-                      "{song.dedication}"
+                      {`"${song.dedication}"`}
                     </p>
                   )}
                 </div>

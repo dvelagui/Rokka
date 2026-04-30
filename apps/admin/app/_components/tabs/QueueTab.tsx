@@ -240,7 +240,7 @@ export default function QueueTab() {
 
         <button
           onClick={handleNext}
-          disabled={actions.isLoading}
+          disabled={actions.isLoading || allQueued.length === 0}
           className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-semibold border border-white/20 text-white/50 hover:border-white/40 hover:text-white/80 transition-colors disabled:opacity-30"
         >
           ⏭ Siguiente
@@ -386,7 +386,7 @@ function NowPlayingCard({
           <p className="text-white/30 text-xs mt-0.5">Mesa {song.table_label}</p>
         )}
         {song.dedication && (
-          <p className="text-white/40 text-xs mt-1 italic">"{song.dedication}"</p>
+          <p className="text-white/40 text-xs mt-1 italic">{`"${song.dedication}"`}</p>
         )}
       </div>
 
@@ -497,7 +497,7 @@ function QueueItemCard({
           </div>
           {item.dedication && (
             <p className="text-[11px] text-white/30 italic mt-0.5 truncate">
-              "{item.dedication}"
+              {`"${item.dedication}"`}
             </p>
           )}
         </div>
