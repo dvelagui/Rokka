@@ -18,9 +18,10 @@ dist/
 .env.local
 .env.*.local
 
-# Markdown docs (excepto README principal)
+# Markdown docs (excepto README y guía de devs)
 *.md
 !README.md
+!CLAUDE.md
 
 # Claude
 .claude/
