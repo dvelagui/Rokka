@@ -3,7 +3,7 @@ import { NextResponse, type NextRequest } from 'next/server'
 
 type CookieToSet = { name: string; value: string; options?: Record<string, unknown> }
 
-const PUBLIC_PATHS = ['/login', '/signup']
+const PUBLIC_PATHS = ['/login', '/signup', '/register']
 
 export async function middleware(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request })

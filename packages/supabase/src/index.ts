@@ -13,7 +13,8 @@ export {
   getStoredTableSession,
   clearTableSession,
 } from './auth/table'
-export type { TableSessionData, StoredTableSession } from './auth/table'
+export type { TableSessionData, StoredTableSession, TableCheckResult } from './auth/table'
+export { checkTableByToken } from './auth/table'
 
 // ── Auth: TV ──────────────────────────────────────────────────────────────────
 export {
@@ -73,8 +74,10 @@ export {
   updateCategory,
   deleteCategory,
   createSubcategory,
+  deleteSubcategory,
   createMenuItem,
   updateMenuItem,
+  deleteMenuItem,
   toggleItemAvailability,
 } from './queries/menu'
 export type { MenuItem, MenuSubcategory, MenuCategory } from './queries/menu'
@@ -115,6 +118,15 @@ export type { AdminNotification, NotificationKind } from './queries/notification
 
 export { getAds, createAd, updateAd, deleteAd, toggleAdActive, reorderAds } from './queries/ads'
 
+export { getFavorites, addFavorite, removeFavorite, toggleFavorite } from './queries/favorites'
+export type { FavoriteSong } from './queries/favorites'
+
+export { getGenres, getGenreWithSongs, addSongToGenre, removeSongFromGenre, createGenre, deleteGenre } from './queries/genres'
+export type { GenreWithSongs } from './queries/genres'
+
+export { getPlayedSongs, getBlockedSongs, vetarCancion, adminAddToQueue } from './queries/history'
+export type { PlayedSong, BlockedSong } from './queries/history'
+
 export {
   getBarStats,
   getStatsByPeriod,
@@ -122,8 +134,9 @@ export {
   getTopSongs,
   getGlobalTopSongs,
   getGlobalBarRanking,
+  getDailyRevenue,
 } from './queries/stats'
-export type { BarStatsSummary, TopSong, GlobalBarRanking, DateRange } from './queries/stats'
+export type { BarStatsSummary, TopSong, GlobalBarRanking, DateRange, DailyRevenue } from './queries/stats'
 
 // ── Services ──────────────────────────────────────────────────────────────────
 export { searchSongs, getVideoDetails, clearYoutubeCache } from './services/youtube'
@@ -168,6 +181,8 @@ export type { UseTablesReturn } from './hooks/useTables'
 
 export { useWaiters } from './hooks/useWaiters'
 export type { UseWaitersReturn } from './hooks/useWaiters'
+export { getWaiterMovements } from './queries/waiters'
+export type { WaiterMovement } from './queries/waiters'
 
 export { useAdminNotifications } from './hooks/useAdminNotifications'
 export type { UseAdminNotificationsReturn } from './hooks/useAdminNotifications'

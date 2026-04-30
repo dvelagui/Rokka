@@ -21,7 +21,12 @@ export default function LoginPage() {
       router.push('/')
       router.refresh()
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error al iniciar sesión')
+      const raw = err instanceof Error ? err.message : ''
+      setError(
+        raw.toLowerCase().includes('invalid') || raw.toLowerCase().includes('credentials')
+          ? 'Credenciales incorrectas'
+          : raw || 'Error al iniciar sesión',
+      )
     } finally {
       setLoading(false)
     }
@@ -113,7 +118,7 @@ export default function LoginPage() {
         </div>
 
         <a
-          href="/signup"
+          href="/register"
           className="
             block text-center border border-border rounded-xl py-3.5
             text-white/60 text-sm hover:border-rokka-purple hover:text-white

@@ -20,6 +20,12 @@ export interface BarConfig {
   max_canciones_por_mesa: number
   /** PIN de acceso a pantalla TV */
   tv_pin: string
+  /** Hora de cierre del bar (HH:MM, 24h). 1h antes no se aceptan más canciones. */
+  closing_time?: string
+  /** Mensajes fijos recientes del admin (últimos 6, persisted in JSONB config) */
+  pinned_history?: string[]
+  /** Mostrar anuncios de terceros en App y TV */
+  third_party_ads?: boolean
   /** Campos heredados del schema original */
   volumen_default?: number
   chat_habilitado?: boolean

@@ -171,6 +171,20 @@ export async function updateMenuItem(
   if (error) throw new Error(error.message)
 }
 
+/** Eliminar subcategoría (cascade a ítems via FK). */
+export async function deleteSubcategory(subcategoryId: string): Promise<void> {
+  const supabase = getSupabaseBrowserClient()
+  const { error } = await supabase.from('menu_subcategories').delete().eq('id', subcategoryId)
+  if (error) throw new Error(error.message)
+}
+
+/** Eliminar ítem del menú. */
+export async function deleteMenuItem(itemId: string): Promise<void> {
+  const supabase = getSupabaseBrowserClient()
+  const { error } = await supabase.from('menu_items').delete().eq('id', itemId)
+  if (error) throw new Error(error.message)
+}
+
 export async function toggleItemAvailability(itemId: string): Promise<boolean> {
   const supabase = getSupabaseBrowserClient()
   const { data: current, error: fetchErr } = await supabase
