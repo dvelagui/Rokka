@@ -1,10 +1,9 @@
 'use client'
 
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { useRouter } from 'next/navigation'
-import { clearTVSession, playNextSong, useAdRotation } from '@rokka/supabase'
-import type { AdRow } from '@rokka/supabase'
+import { clearTVSession, playNextSong } from '@rokka/supabase'
 import type { QueueItemWithVotes } from '@rokka/supabase'
 import { TVProvider, useTVContext } from '../providers/TVProvider'
 import { RealtimeProvider, useTVRealtime } from '../providers/RealtimeProvider'
@@ -12,6 +11,27 @@ import { YouTubePlayer } from '../components/YouTubePlayer'
 import { VideoHeaderOverlay } from '../components/VideoHeaderOverlay'
 import { ChatOverlay } from '../components/ChatOverlay'
 import { ReactionsOverlay } from '../components/ReactionsOverlay'
+import { BottomBar } from '../components/BottomBar'
+
+// ── Burn-in prevention ────────────────────────────────────────────────────────
+// Shifts static elements 1–2 px every 5 minutes. Imperceptible from 2+ meters
+// but sufficient to prevent permanent image retention on OLED panels.
+
+function useBurnInShift() {
+  const [t, setT] = useState({ x: 0, y: 0 })
+  useEffect(() => {
+    const id = setInterval(
+      () =>
+        setT({
+          x: Math.round((Math.random() - 0.5) * 4),
+          y: Math.round((Math.random() - 0.5) * 4),
+        }),
+      5 * 60_000,
+    )
+    return () => clearInterval(id)
+  }, [])
+  return `translate(${t.x}px, ${t.y}px)`
+}
 
 // ── Clock ─────────────────────────────────────────────────────────────────────
 
@@ -39,43 +59,6 @@ function ConnectionDot({ status }: { status: ConnStatus }) {
     disconnected: 'bg-rokka-red',
   }
   return <span className={`inline-block h-2.5 w-2.5 rounded-full ${cls[status]}`} />
-}
-
-// ── Ad overlay ────────────────────────────────────────────────────────────────
-
-function AdOverlay({ ad, countdown }: { ad: AdRow; countdown: number }) {
-  return (
-    <motion.div
-      className="fixed inset-0 z-50 flex items-center justify-center"
-      style={{ backgroundColor: `${ad.color}e6` }}
-      initial={{ opacity: 0, scale: 0.94 }}
-      animate={{ opacity: 1, scale: 1 }}
-      exit={{ opacity: 0, scale: 1.04 }}
-      transition={{ duration: 0.35, ease: 'easeOut' }}
-    >
-      <div className="text-center max-w-3xl px-16 space-y-5">
-        <motion.div
-          className="text-[8rem] leading-none"
-          animate={{ scale: [1, 1.06, 1] }}
-          transition={{ duration: 2.2, repeat: Infinity, ease: 'easeInOut' }}
-        >
-          {ad.emoji}
-        </motion.div>
-        <h2 className="text-6xl font-black text-white drop-shadow-2xl leading-tight">{ad.title}</h2>
-        {ad.subtitle && (
-          <p className="text-3xl text-white/85 font-semibold">{ad.subtitle}</p>
-        )}
-        {ad.company_name && (
-          <p className="text-lg text-white/50 uppercase tracking-[0.25em]">{ad.company_name}</p>
-        )}
-        <div className="pt-3">
-          <span className="font-mono text-white/60 text-lg bg-black/30 px-4 py-1.5 rounded-full">
-            {countdown}s
-          </span>
-        </div>
-      </div>
-    </motion.div>
-  )
 }
 
 // ── Queue list (sidebar) ──────────────────────────────────────────────────────
@@ -185,15 +168,43 @@ function TVDisplay() {
   const router = useRouter()
   const { barId, barSlug, bar } = useTVContext()
   const { queue, chat, votes, connectionStatus, broadcast } = useTVRealtime()
-  const { currentAd, isShowingAd, countdown } = useAdRotation(barId)
 
   const [started, setStarted] = useState(false)
   const [isPlaying, setIsPlaying] = useState(true)
+  const [videoLoading, setVideoLoading] = useState(false)
+  const [cursorHidden, setCursorHidden] = useState(false)
+  const cursorTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const burnIn = useBurnInShift()
+
+  // Hide cursor after 3 seconds of mouse inactivity
+  useEffect(() => {
+    const show = () => {
+      setCursorHidden(false)
+      if (cursorTimerRef.current) clearTimeout(cursorTimerRef.current)
+      cursorTimerRef.current = setTimeout(() => setCursorHidden(true), 3_000)
+    }
+    window.addEventListener('mousemove', show)
+    window.addEventListener('mousedown', show)
+    return () => {
+      window.removeEventListener('mousemove', show)
+      window.removeEventListener('mousedown', show)
+      if (cursorTimerRef.current) clearTimeout(cursorTimerRef.current)
+    }
+  }, [])
+
+  // Request fullscreen + unlock autoplay on first tap
+  const handleStart = useCallback(() => {
+    setStarted(true)
+    document.documentElement.requestFullscreen?.().catch(() => {})
+  }, [])
 
   const currentSong = queue.currentSong
   const allMessages = chat.messages
   const pinnedMessage =
     [...allMessages].reverse().find((m) => m.is_pinned && m.message_type === 'admin') ?? null
+
+  const upcomingQueue = queue.queue.filter((q) => q.status === 'queued')
+  const topHasBid = (upcomingQueue[0]?.bid_amount ?? 0) > 0
 
   // Toggle playback when admin sends pause_music action
   useEffect(() => {
@@ -201,6 +212,15 @@ function TVDisplay() {
       setIsPlaying((prev) => !prev)
     }
   }, [broadcast.latestAdminAction])
+
+  // Show loading spinner whenever the current song changes (clears on onPlaying)
+  useEffect(() => {
+    if (!started || !currentSong?.id) {
+      setVideoLoading(false)
+      return
+    }
+    setVideoLoading(true)
+  }, [started, currentSong?.id])
 
   // Advance to next song in DB when the video ends
   const handleVideoEnd = useCallback(async () => {
@@ -212,17 +232,47 @@ function TVDisplay() {
     }
   }, [barId])
 
+  // Auto-skip when YouTube reports a video error (unavailable, geo-blocked, etc.)
+  const handleVideoError = useCallback(
+    async (errorCode: number) => {
+      console.warn(`[TV] YouTube error ${errorCode} for "${currentSong?.title}" — skipping`)
+      if (!barId) return
+      try {
+        await playNextSong(barId)
+      } catch {
+        // Admin can advance manually from the panel
+      }
+    },
+    [barId, currentSong?.title],
+  )
+
+  // Clear loading spinner the moment YouTube starts playing
+  const handleVideoPlaying = useCallback(() => {
+    setVideoLoading(false)
+  }, [])
+
+  const handleReset = useCallback(() => {
+    clearTVSession()
+    router.replace('/setup')
+  }, [router])
+
   return (
-    <div className="w-screen h-screen bg-background flex flex-col overflow-hidden select-none">
+    <div
+      className="w-screen h-screen bg-background flex flex-col overflow-hidden select-none"
+      style={{ cursor: cursorHidden ? 'none' : 'default' }}
+    >
 
       {/* ── Start overlay ──────────────────────────────────────────────────── */}
       <AnimatePresence>
-        {!started && <StartOverlay key="start" onStart={() => setStarted(true)} />}
+        {!started && <StartOverlay key="start" onStart={handleStart} />}
       </AnimatePresence>
 
       {/* ── Top bar ───────────────────────────────────────────────────────── */}
       <header className="shrink-0 flex items-center gap-3 px-6 py-3 bg-card border-b border-border h-[52px] z-20">
-        <span className="text-2xl font-black tracking-tight">
+        <span
+          className="text-2xl font-black tracking-tight"
+          style={{ transform: burnIn, transition: 'transform 2s ease-in-out', display: 'inline-block' }}
+        >
           <span className="text-rokka-fire">ROKKA</span>
         </span>
         {bar?.name && (
@@ -241,6 +291,57 @@ function TVDisplay() {
         <span className="text-white/25 text-sm font-mono hidden lg:block">{barSlug}</span>
         <Clock />
       </header>
+
+      {/* ── Reconnection banner — shown only when realtime drops ─────────── */}
+      <AnimatePresence>
+        {(connectionStatus === 'reconnecting' || connectionStatus === 'disconnected') && (
+          <motion.div
+            key="reconnect-banner"
+            className="shrink-0 flex items-center justify-center gap-2 z-30"
+            style={{
+              background:
+                connectionStatus === 'disconnected'
+                  ? 'rgba(255,69,0,0.12)'
+                  : 'rgba(255,180,0,0.10)',
+              borderBottom:
+                connectionStatus === 'disconnected'
+                  ? '1px solid rgba(255,69,0,0.28)'
+                  : '1px solid rgba(255,180,0,0.18)',
+              padding: 'clamp(5px, 0.7vh, 9px) clamp(12px, 1.5vw, 20px)',
+            }}
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.3 }}
+          >
+            <div
+              className="animate-spin shrink-0"
+              style={{
+                width: 14,
+                height: 14,
+                borderRadius: '50%',
+                border: '2px solid rgba(255,180,0,0.18)',
+                borderTopColor: connectionStatus === 'disconnected' ? '#ff4500' : '#ffb400',
+              }}
+            />
+            <span
+              style={{
+                fontSize: 'clamp(11px, 1.2vw, 15px)',
+                color:
+                  connectionStatus === 'disconnected'
+                    ? 'rgba(255,100,50,0.9)'
+                    : 'rgba(255,200,50,0.9)',
+                fontWeight: 600,
+                letterSpacing: '0.4px',
+              }}
+            >
+              {connectionStatus === 'disconnected'
+                ? 'Sin conexión — reintentando…'
+                : 'Reconectando…'}
+            </span>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* ── Main content ──────────────────────────────────────────────────── */}
       <AnimatePresence mode="wait">
@@ -275,6 +376,8 @@ function TVDisplay() {
                         videoId={currentSong.youtube_video_id}
                         isPlaying={isPlaying}
                         onVideoEnd={handleVideoEnd}
+                        onError={handleVideoError}
+                        onPlaying={handleVideoPlaying}
                       />
                     </motion.div>
                   ) : (
@@ -285,6 +388,48 @@ function TVDisplay() {
                       animate={{ opacity: 1 }}
                     >
                       <span style={{ fontSize: 'clamp(60px, 10vw, 120px)' }}>🎵</span>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+
+                {/* Loading spinner — visible while YouTube buffers after a song change */}
+                <AnimatePresence>
+                  {videoLoading && currentSong.youtube_video_id && (
+                    <motion.div
+                      key="vid-loading"
+                      className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none"
+                      style={{ zIndex: 11 }}
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      transition={{ duration: 0.25, delay: 0.4 }}
+                    >
+                      <div
+                        className="animate-spin"
+                        style={{
+                          width: 'clamp(32px, 3.5vw, 50px)',
+                          height: 'clamp(32px, 3.5vw, 50px)',
+                          borderRadius: '50%',
+                          border: '3px solid rgba(0,229,255,0.15)',
+                          borderTopColor: '#00e5ff',
+                          marginBottom: 'clamp(10px, 1.2vh, 16px)',
+                        }}
+                      />
+                      <p
+                        style={{
+                          fontSize: 'clamp(11px, 1.3vw, 17px)',
+                          color: 'rgba(255,255,255,0.6)',
+                          fontWeight: 600,
+                          maxWidth: '55%',
+                          textAlign: 'center' as const,
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap' as const,
+                          textShadow: '0 1px 6px rgba(0,0,0,0.8)',
+                        }}
+                      >
+                        {currentSong.title}
+                      </p>
                     </motion.div>
                   )}
                 </AnimatePresence>
@@ -381,32 +526,59 @@ function TVDisplay() {
         )}
       </AnimatePresence>
 
-      {/* ── Bottom bar ────────────────────────────────────────────────────── */}
-      <footer className="shrink-0 flex items-center gap-3 px-6 py-2.5 bg-card border-t border-border h-[48px] z-20">
-        {pinnedMessage ? (
-          <>
-            <span className="text-rokka-cyan text-sm shrink-0">📌</span>
-            <p className="text-white/65 text-sm line-clamp-1 flex-1">{pinnedMessage.message}</p>
-          </>
-        ) : (
-          <p className="text-white/20 text-sm flex-1">
-            Escanea el QR de tu mesa para pedir canciones y chatear
-          </p>
-        )}
-        <button
-          onClick={() => { clearTVSession(); router.replace('/setup') }}
-          className="text-white/10 text-xs hover:text-white/30 transition-colors shrink-0"
-        >
-          [dev] reset
-        </button>
-      </footer>
+      {/* ── Bottom bar: pinned message + progress + queue grid + inline ad ── */}
+      <BottomBar
+        barId={barId}
+        currentSong={currentSong}
+        queue={queue.queue}
+        pinnedMessage={pinnedMessage}
+        isPlaying={isPlaying}
+        onReset={handleReset}
+      />
 
-      {/* ── Ad overlay (fullscreen, encima de todo) ────────────────────── */}
+      {/* ── Fire viewport border — inset box-shadow via CSS @keyframes ──────
+            Uses the spec's inset trick: box-shadow: inset 0 0 0 4px #FF4500
+            so no extra DOM element needed for the border edge.           ── */}
       <AnimatePresence>
-        {isShowingAd && currentAd && (
-          <AdOverlay key="ad" ad={currentAd} countdown={countdown} />
+        {topHasBid && (
+          <motion.div
+            key="fire-border"
+            className="fixed inset-0 pointer-events-none"
+            style={{ animation: 'borderfire 1.2s ease-in-out infinite alternate', zIndex: 40 }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.5 }}
+          />
         )}
       </AnimatePresence>
+
+      {/* ── Fullscreen toggle — barely visible, bottom-right corner ─────── */}
+      <button
+        onClick={() => {
+          if (!document.fullscreenElement) {
+            document.documentElement.requestFullscreen?.()
+          } else {
+            document.exitFullscreen?.()
+          }
+        }}
+        className="fixed pointer-events-auto"
+        style={{
+          right: 'clamp(10px, 1.2vw, 18px)',
+          bottom: 'clamp(10px, 1.2vh, 18px)',
+          fontSize: 'clamp(12px, 1.4vw, 18px)',
+          color: 'rgba(255,255,255,0.10)',
+          background: 'none',
+          border: 'none',
+          cursor: 'pointer',
+          padding: '4px',
+          lineHeight: 1,
+          zIndex: 50,
+        }}
+        title="Pantalla completa"
+      >
+        ⛶
+      </button>
     </div>
   )
 }

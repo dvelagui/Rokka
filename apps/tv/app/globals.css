@@ -25,3 +25,114 @@ body {
   color: #ffffff;
   -webkit-font-smoothing: antialiased;
 }
+
+/* ── TV animations ────────────────────────────────────────────────────────────
+   All durations and intensities are tuned for a TV screen viewed from
+   2–4 meters. Sub-pixel shifts are intentional (burn-in protection).
+   ─────────────────────────────────────────────────────────────────────────── */
+
+/* Pulsing live indicator on the now-playing strip */
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.3;
+  }
+}
+
+/* Fire border — applied to a fixed inset-0 overlay via box-shadow inset trick */
+@keyframes borderfire {
+  0% {
+    box-shadow:
+      inset 0 0 0 4px #ff4500,
+      inset 0 0 60px rgba(255, 69, 0, 0.13);
+  }
+  100% {
+    box-shadow:
+      inset 0 0 0 5px #ff6500,
+      inset 0 0 100px rgba(255, 69, 0, 0.27);
+  }
+}
+
+/* Fire glow on queue slot #1 with a bid */
+@keyframes itemfire {
+  0% {
+    box-shadow: 0 0 8px rgba(255, 69, 0, 0.27);
+  }
+  100% {
+    box-shadow: 0 0 20px rgba(255, 69, 0, 0.67);
+  }
+}
+
+/* Vertical bounce for 🔥 and 🟠 emoji in queue cards */
+@keyframes bounce {
+  0% {
+    transform: translateY(0);
+  }
+  100% {
+    transform: translateY(-5px);
+  }
+}
+
+/* Ad panel slides in from the right */
+@keyframes slideinr {
+  from {
+    opacity: 0;
+    transform: translateX(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Chat message slides in from the left */
+@keyframes chatfade {
+  from {
+    opacity: 0;
+    transform: translateX(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Floating emoji reactions */
+@keyframes floatup {
+  0% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-130px) scale(1.3);
+  }
+}
+
+/* ── TV responsive utilities ──────────────────────────────────────────────────
+   Used as CSS class names in components — Tailwind breakpoints don't map
+   cleanly to TV viewport widths, so we use plain media queries here.
+   ─────────────────────────────────────────────────────────────────────────── */
+
+/* 5-column queue grid that collapses to 3 columns on narrow viewports */
+.tv-queue-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: clamp(4px, 0.5vw, 8px);
+}
+
+@media (max-width: 900px) {
+  .tv-queue-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* Hide the voting card on very small/portrait displays */
+@media (max-width: 700px) {
+  .tv-vote-card {
+    display: none;
+  }
+}

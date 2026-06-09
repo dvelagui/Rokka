@@ -77,9 +77,17 @@ export interface YouTubePlayerProps {
   onVideoEnd?: () => void
   /** Called on playback error (e.g. video unavailable or geo-blocked) */
   onError?: (errorCode: number) => void
+  /** Called when playback transitions to PLAYING state (buffering done) */
+  onPlaying?: () => void
 }
 
-export function YouTubePlayer({ videoId, isPlaying = true, onVideoEnd, onError }: YouTubePlayerProps) {
+export function YouTubePlayer({
+  videoId,
+  isPlaying = true,
+  onVideoEnd,
+  onError,
+  onPlaying,
+}: YouTubePlayerProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const playerRef = useRef<YTPlayer | null>(null)
 
@@ -88,10 +96,12 @@ export function YouTubePlayer({ videoId, isPlaying = true, onVideoEnd, onError }
   const isPlayingRef = useRef(isPlaying)
   const onVideoEndRef = useRef(onVideoEnd)
   const onErrorRef = useRef(onError)
+  const onPlayingRef = useRef(onPlaying)
 
   isPlayingRef.current = isPlaying
   onVideoEndRef.current = onVideoEnd
   onErrorRef.current = onError
+  onPlayingRef.current = onPlaying
 
   // Load a new video when videoId changes
   useEffect(() => {
@@ -145,6 +155,7 @@ export function YouTubePlayer({ videoId, isPlaying = true, onVideoEnd, onError }
           },
           onStateChange: (e) => {
             if (e.data === 0) onVideoEndRef.current?.() // 0 = ENDED
+            if (e.data === 1) onPlayingRef.current?.()  // 1 = PLAYING
           },
           onError: (e) => {
             onErrorRef.current?.(e.data)

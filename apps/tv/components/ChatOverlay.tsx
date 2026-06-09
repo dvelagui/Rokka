@@ -1,5 +1,6 @@
 'use client'
 
+import { useEffect, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import type { ChatMessage } from '@rokka/supabase'
 
@@ -16,8 +17,16 @@ function formatTime(iso: string): string {
 }
 
 export function ChatOverlay({ messages }: Props) {
-  // Last 6 messages, reactions shown as floating emoji (no bubble)
-  const visible = messages.slice(-6)
+  // Limit visible messages based on viewport height — small screens show fewer
+  const [maxMessages, setMaxMessages] = useState(6)
+  useEffect(() => {
+    const update = () => setMaxMessages(window.innerHeight < 600 ? 3 : 6)
+    update()
+    window.addEventListener('resize', update)
+    return () => window.removeEventListener('resize', update)
+  }, [])
+
+  const visible = messages.slice(-maxMessages)
 
   return (
     <div

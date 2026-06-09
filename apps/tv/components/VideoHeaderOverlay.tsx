@@ -1,5 +1,6 @@
 'use client'
 
+import { useEffect, useState } from 'react'
 import type { BarPublic } from '../providers/TVProvider'
 
 interface Props {
@@ -8,18 +9,41 @@ interface Props {
   skipVotes: number
 }
 
+// ── Burn-in prevention ────────────────────────────────────────────────────────
+// Shifts static elements 1–2px every 5 minutes. Imperceptible to viewers but
+// prevents permanent image retention on OLED panels.
+
+function useBurnInShift() {
+  const [t, setT] = useState({ x: 0, y: 0 })
+  useEffect(() => {
+    const id = setInterval(
+      () =>
+        setT({
+          x: Math.round((Math.random() - 0.5) * 4),
+          y: Math.round((Math.random() - 0.5) * 4),
+        }),
+      5 * 60_000,
+    )
+    return () => clearInterval(id)
+  }, [])
+  return `translate(${t.x}px, ${t.y}px)`
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+
 export function VideoHeaderOverlay({ bar, keepVotes, skipVotes }: Props) {
   const total = keepVotes + skipVotes || 1
   const keepPct = (keepVotes / total) * 100
   const skipPct = (skipVotes / total) * 100
+  const burnIn = useBurnInShift()
 
   return (
     <div
       className="absolute top-0 left-0 right-0 flex items-start justify-between pointer-events-none z-20"
       style={{ padding: 'clamp(10px, 1.5vw, 20px) clamp(12px, 1.8vw, 24px)' }}
     >
-      {/* ── Left: bar logo ──────────────────────────────────────────────── */}
-      <div>
+      {/* ── Left: bar logo — burn-in protection applied ──────────────────── */}
+      <div style={{ transform: burnIn, transition: 'transform 2s ease-in-out' }}>
         {bar?.logo_url ? (
           <img
             src={bar.logo_url}
@@ -53,8 +77,9 @@ export function VideoHeaderOverlay({ bar, keepVotes, skipVotes }: Props) {
         )}
       </div>
 
-      {/* ── Center: live voting card ────────────────────────────────────── */}
+      {/* ── Center: live voting card — hidden on narrow viewports ────────── */}
       <div
+        className="tv-vote-card"
         style={{
           background: 'rgba(0,0,0,0.55)',
           backdropFilter: 'blur(16px)',
@@ -69,7 +94,6 @@ export function VideoHeaderOverlay({ bar, keepVotes, skipVotes }: Props) {
           minWidth: 'clamp(130px, 16vw, 230px)',
         }}
       >
-        {/* Label */}
         <span
           style={{
             fontSize: '8px',
@@ -82,7 +106,6 @@ export function VideoHeaderOverlay({ bar, keepVotes, skipVotes }: Props) {
           Votación
         </span>
 
-        {/* Dual bar: cyan (keep) | purple (skip) */}
         <div
           style={{
             width: '100%',
@@ -109,7 +132,6 @@ export function VideoHeaderOverlay({ bar, keepVotes, skipVotes }: Props) {
           />
         </div>
 
-        {/* Counts */}
         <div
           style={{
             display: 'flex',
@@ -124,7 +146,7 @@ export function VideoHeaderOverlay({ bar, keepVotes, skipVotes }: Props) {
         </div>
       </div>
 
-      {/* ── Right: ROKKA branding ───────────────────────────────────────── */}
+      {/* ── Right: ROKKA branding — burn-in protection applied ───────────── */}
       <span
         style={{
           color: '#00e5ff',
@@ -132,6 +154,9 @@ export function VideoHeaderOverlay({ bar, keepVotes, skipVotes }: Props) {
           fontSize: 'clamp(12px, 1.5vw, 19px)',
           letterSpacing: '4px',
           textShadow: '0 0 20px rgba(0,229,255,0.55), 0 2px 8px rgba(0,0,0,0.7)',
+          display: 'inline-block',
+          transform: burnIn,
+          transition: 'transform 2s ease-in-out',
         }}
       >
         ROKKA
