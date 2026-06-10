@@ -77,20 +77,27 @@ export async function updateBarConfig(
   return data as BarConfig
 }
 
-/** Actualizar nombre, emoji o logo del bar. */
+/**
+ * Actualizar nombre, emoji, logo o slug del bar.
+ * Lanza un error con mensaje legible si el slug ya está en uso (UNIQUE).
+ */
 export async function updateBarProfile(
   barId: string,
-  data: Partial<{ name: string; emoji: string; logoUrl: string }>,
+  data: Partial<{ name: string; emoji: string; logoUrl: string; slug: string }>,
 ): Promise<void> {
   const supabase = getSupabaseBrowserClient()
   const update: Record<string, string> = {}
   if (data.name)    update.name     = data.name
   if (data.emoji)   update.emoji    = data.emoji
   if (data.logoUrl) update.logo_url = data.logoUrl
+  if (data.slug)    update.slug     = data.slug
 
   const { error } = await supabase
     .from('bars')
     .update(update)
     .eq('id', barId)
-  if (error) throw new Error(error.message)
+  if (error) {
+    if (error.code === '23505') throw new Error('Ese slug ya está en uso por otro bar')
+    throw new Error(error.message)
+  }
 }

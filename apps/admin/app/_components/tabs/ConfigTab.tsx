@@ -7,14 +7,16 @@ import { useAdminContext } from '../../../providers/AdminProvider'
 // ── ConfigTab ─────────────────────────────────────────────────────────────────
 
 export default function ConfigTab() {
-  const { bar, barConfig, admin, refreshBar } = useAdminContext()
+  const { bar, barConfig, admin, updateBarLocal } = useAdminContext()
 
   // ── Profile state ─────────────────────────────────────────────────────────
   const [barName,       setBarName]       = useState(bar?.name      ?? '')
   const [barEmoji,      setBarEmoji]      = useState(bar?.emoji     ?? '')
   const [logoUrl,       setLogoUrl]       = useState(bar?.logo_url  ?? '')
+  const [barSlug,       setBarSlug]       = useState(bar?.slug      ?? '')
   const [savingProfile, setSavingProfile] = useState(false)
   const [profileOk,     setProfileOk]     = useState(false)
+  const [profileError,  setProfileError]  = useState('')
 
   // ── Config state ─────────────────────────────────────────────────────────
   const [avgSong,      setAvgSong]      = useState(barConfig?.avg_song_duration      ?? 180)
@@ -35,18 +37,37 @@ export default function ConfigTab() {
     if (!bar?.id) return
     setSavingProfile(true)
     setProfileOk(false)
+    setProfileError('')
     try {
+      const name = barName.trim() || bar.name
+      const emoji = barEmoji || bar.emoji
+      const logo = logoUrl.trim() || bar.logo_url
+      const slug = barSlug.trim().toLowerCase()
+
+      if (slug !== bar.slug) {
+        if (!SLUG_REGEX.test(slug)) {
+          setProfileError('Slug inválido: usa solo minúsculas, números y guiones')
+          return
+        }
+        if (!confirm('Cambiar el slug requiere reconfigurar la pantalla TV con el nuevo slug + PIN. ¿Continuar?')) {
+          return
+        }
+      }
+
       await updateBarProfile(bar.id, {
-        name:    barName.trim()  || undefined,
-        emoji:   barEmoji        || undefined,
-        logoUrl: logoUrl.trim()  || undefined,
+        name: barName.trim() || undefined,
+        emoji: barEmoji || undefined,
+        logoUrl: logoUrl.trim() || undefined,
+        slug: slug !== bar.slug ? slug : undefined,
       })
       await addLogEntry(bar.id, admin?.email ?? 'admin', 'config_updated', 'Actualizó perfil del bar')
-      await refreshBar()
+      // Aplica los cambios localmente — un re-fetch inmediato puede leer datos
+      // desactualizados por lag de lectura tras escritura en Supabase.
+      updateBarLocal({ name, emoji, logo_url: logo, slug })
       setProfileOk(true)
       setTimeout(() => setProfileOk(false), 2000)
     } catch (err) {
-      console.error(err)
+      setProfileError(err instanceof Error ? err.message : 'Error al guardar')
     } finally {
       setSavingProfile(false)
     }
@@ -57,7 +78,7 @@ export default function ConfigTab() {
     setSavingConfig(true)
     setConfigOk(false)
     try {
-      await updateBarConfig(bar.id, {
+      const updatedConfig = await updateBarConfig(bar.id, {
         avg_song_duration:      avgSong,
         max_tables:             maxTables,
         min_bid:                minBid,
@@ -69,7 +90,7 @@ export default function ConfigTab() {
         max_canciones_por_mesa: maxSongs,
       })
       await addLogEntry(bar.id, admin?.email ?? 'admin', 'config_updated', 'Actualizó configuración del bar')
-      await refreshBar()
+      updateBarLocal({ config: updatedConfig, tv_pin: tvPin })
       setConfigOk(true)
       setTimeout(() => setConfigOk(false), 2000)
     } catch (err) {
@@ -134,13 +155,18 @@ export default function ConfigTab() {
           </div>
         </div>
 
-        {bar?.slug && (
-          <div className="space-y-1">
-            <label className={labelCls}>Slug (URL pública)</label>
-            <div className="w-full bg-[#111] border border-[#2a2a2a] rounded-xl px-3 py-2 text-sm text-white/30 font-mono select-all">
-              {bar.slug}
-            </div>
-          </div>
+        <Field label="Slug (URL pública)" hint="usado por la pantalla TV para iniciar sesión">
+          <input
+            type="text"
+            value={barSlug}
+            onChange={(e) => setBarSlug(e.target.value.toLowerCase())}
+            placeholder="mi-bar"
+            className={inputCls + ' font-mono'}
+          />
+        </Field>
+
+        {profileError && (
+          <p className="text-[11px] text-rokka-fire font-semibold">{profileError}</p>
         )}
 
         <SaveButton saving={savingProfile} ok={profileOk} onClick={saveProfile} label="Guardar perfil" />
@@ -331,3 +357,4 @@ function SaveButton({
 
 const labelCls = 'text-[10px] font-semibold uppercase tracking-wider text-white/40'
 const inputCls = 'w-full bg-[#1a1a1a] border border-[#2a2a2a] rounded-xl px-3 py-2 text-sm text-white placeholder-white/25 focus:outline-none focus:border-rokka-cyan/50'
+const SLUG_REGEX = /^[a-z0-9]+(-[a-z0-9]+)*$/

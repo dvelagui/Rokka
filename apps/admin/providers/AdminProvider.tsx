@@ -10,6 +10,8 @@ interface AdminContextValue {
   barConfig: BarProfile['config'] | null
   isLoading: boolean
   refreshBar: () => Promise<void>
+  /** Aplica cambios localmente sin re-fetch — evita lag de lectura tras escritura */
+  updateBarLocal: (partial: Partial<BarProfile>) => void
   /** Estado de pausa compartido entre Header y QueueTab */
   isPaused: boolean
   togglePause: () => void
@@ -21,6 +23,7 @@ const AdminContext = createContext<AdminContextValue>({
   barConfig: null,
   isLoading: true,
   refreshBar: async () => {},
+  updateBarLocal: () => {},
   isPaused: false,
   togglePause: () => {},
 })
@@ -52,6 +55,10 @@ export function AdminProvider({ children }: { children: ReactNode }) {
     if (barId) await loadBar(barId)
   }, [barId, loadBar])
 
+  const updateBarLocal = useCallback((partial: Partial<BarProfile>) => {
+    setBar((prev) => (prev ? { ...prev, ...partial } : prev))
+  }, [])
+
   const togglePause = useCallback(() => setIsPaused((p) => !p), [])
 
   return (
@@ -61,6 +68,7 @@ export function AdminProvider({ children }: { children: ReactNode }) {
       barConfig: bar?.config ?? null,
       isLoading: loading || barLoading,
       refreshBar,
+      updateBarLocal,
       isPaused,
       togglePause,
     }}>
