@@ -109,14 +109,11 @@ export async function getTransactionByQrCode(
   qrCode: string,
 ): Promise<CreditTransaction | null> {
   const supabase = getSupabaseBrowserClient()
-  const { data, error } = await supabase
-    .from('credits_transactions')
-    .select('*')
-    .eq('qr_code', qrCode)
-    .eq('status', 'pending')
-    .single()
-  if (error) return null
-  return (data ?? null) as CreditTransaction | null
+  const { data, error } = await supabase.rpc('get_recharge_transaction_by_qr', {
+    p_qr_code: qrCode,
+  })
+  if (error || !data) return null
+  return data as CreditTransaction
 }
 
 /**
