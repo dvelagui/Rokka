@@ -222,6 +222,15 @@ function TVDisplay() {
     setVideoLoading(true)
   }, [started, currentSong?.id])
 
+  // Arrancar la cola si no hay ninguna canción en estado 'playing' aún
+  // (p.ej. primera canción pedida tras configurar la TV: nunca hubo un
+  // video que "termine" para disparar play_next_song)
+  useEffect(() => {
+    if (!started || !barId || currentSong || queue.isLoading) return
+    if (upcomingQueue.length === 0) return
+    void playNextSong(barId)
+  }, [started, barId, currentSong, queue.isLoading, upcomingQueue.length])
+
   // Advance to next song in DB when the video ends
   const handleVideoEnd = useCallback(async () => {
     if (!barId) return
