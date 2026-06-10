@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { useRouter } from 'next/navigation'
 import { clearTVSession, playNextSong } from '@rokka/supabase'
-import type { QueueItemWithVotes } from '@rokka/supabase'
+import type { ChatMessage } from '@rokka/supabase'
 import { TVProvider, useTVContext } from '../providers/TVProvider'
 import { RealtimeProvider, useTVRealtime } from '../providers/RealtimeProvider'
 import { YouTubePlayer } from '../components/YouTubePlayer'
@@ -61,46 +61,71 @@ function ConnectionDot({ status }: { status: ConnStatus }) {
   return <span className={`inline-block h-2.5 w-2.5 rounded-full ${cls[status]}`} />
 }
 
-// ── Queue list (sidebar) ──────────────────────────────────────────────────────
+// ── Chat panel (sidebar) ──────────────────────────────────────────────────────
 
-function QueueList({ queue }: { queue: QueueItemWithVotes[] }) {
-  const upcoming = queue.filter((q) => q.status === 'queued').slice(0, 7)
+function formatChatTime(iso: string): string {
+  try {
+    return new Date(iso).toLocaleTimeString('es', { hour: '2-digit', minute: '2-digit' })
+  } catch {
+    return ''
+  }
+}
+
+function ChatPanel({ messages }: { messages: ChatMessage[] }) {
+  const visible = messages.slice(-30)
+  const bottomRef = useRef<HTMLDivElement | null>(null)
+
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }, [visible.length])
+
   return (
-    <div className="space-y-2">
-      <p className="text-white/35 text-xs font-bold uppercase tracking-widest mb-3">
-        Próximas canciones
+    <div className="flex flex-col h-full">
+      <p className="text-white/35 text-xs font-bold uppercase tracking-widest px-5 pt-4 mb-3 shrink-0">
+        Chat en vivo
       </p>
-      {upcoming.length === 0 ? (
-        <p className="text-white/20 text-sm italic">Cola vacía</p>
-      ) : (
-        <AnimatePresence mode="popLayout">
-          {upcoming.map((item, i) => (
-            <motion.div
-              key={item.id}
-              layout
-              initial={{ opacity: 0, x: 24 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -12, height: 0, overflow: 'hidden' }}
-              transition={{ duration: 0.3 }}
-              className="flex items-start gap-3 pb-2 border-b border-white/[0.06] last:border-0"
-            >
-              <span className="text-white/20 font-mono text-sm w-5 shrink-0 pt-0.5">{i + 1}</span>
-              <div className="flex-1 min-w-0">
-                <p className="text-white text-sm font-semibold leading-snug truncate">{item.title}</p>
-                <p className="text-white/45 text-xs truncate">{item.artist}</p>
-                {item.table_label && (
-                  <p className="text-white/25 text-xs mt-0.5">Mesa {item.table_label}</p>
+      <div className="flex-1 overflow-y-auto px-5 pb-4 space-y-3 [scrollbar-width:none]">
+        {visible.length === 0 ? (
+          <p className="text-white/20 text-sm italic">Sin mensajes todavía</p>
+        ) : (
+          <AnimatePresence mode="popLayout" initial={false}>
+            {visible.map((msg) => (
+              <motion.div
+                key={msg.id}
+                layout
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, height: 0, overflow: 'hidden', marginBottom: 0 }}
+                transition={{ duration: 0.3 }}
+              >
+                {msg.message_type === 'reaction' ? (
+                  <span className="text-2xl leading-none">{msg.message}</span>
+                ) : (
+                  <div className="space-y-0.5">
+                    <p
+                      className={`text-[10px] font-semibold tracking-wide ${
+                        msg.message_type === 'admin' ? 'text-rokka-cyan' : 'text-white/35'
+                      }`}
+                    >
+                      {msg.message_type === 'admin' ? '🎛 DJ' : 'Mesa'} · {formatChatTime(msg.created_at)}
+                    </p>
+                    <div
+                      className={`rounded-xl px-3 py-1.5 text-sm leading-snug break-words ${
+                        msg.message_type === 'admin'
+                          ? 'bg-rokka-cyan/15 border border-rokka-cyan/25 text-white font-semibold'
+                          : 'bg-white/5 border border-white/[0.06] text-white/85'
+                      }`}
+                    >
+                      {msg.message}
+                    </div>
+                  </div>
                 )}
-              </div>
-              {item.bid_amount > 0 && (
-                <span className="text-rokka-gold text-xs font-bold shrink-0 pt-0.5">
-                  💰 {item.bid_amount}
-                </span>
-              )}
-            </motion.div>
-          ))}
-        </AnimatePresence>
-      )}
+              </motion.div>
+            ))}
+          </AnimatePresence>
+        )}
+        <div ref={bottomRef} />
+      </div>
     </div>
   )
 }
@@ -525,11 +550,9 @@ function TVDisplay() {
               </div>
             </div>
 
-            {/* ── Right: queue only (chat moved to video overlay) ──────────── */}
+            {/* ── Right: chat panel ────────────────────────────────────────── */}
             <div className="flex-1 flex flex-col border-l border-border overflow-hidden">
-              <div className="flex-1 overflow-y-auto px-5 py-4 [scrollbar-width:none]">
-                <QueueList queue={queue.queue} />
-              </div>
+              <ChatPanel messages={allMessages} />
             </div>
           </motion.div>
         )}
