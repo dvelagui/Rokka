@@ -9,7 +9,6 @@ import { TVProvider, useTVContext } from '../providers/TVProvider'
 import { RealtimeProvider, useTVRealtime } from '../providers/RealtimeProvider'
 import { YouTubePlayer } from '../components/YouTubePlayer'
 import { VideoHeaderOverlay } from '../components/VideoHeaderOverlay'
-import { ChatOverlay } from '../components/ChatOverlay'
 import { ReactionsOverlay } from '../components/ReactionsOverlay'
 import { BottomBar } from '../components/BottomBar'
 
@@ -489,10 +488,7 @@ function TVDisplay() {
                   skipVotes={votes.skipVotes}
                 />
 
-                {/* 2. Chat bubbles at bottom-left of the video */}
-                <ChatOverlay messages={allMessages} />
-
-                {/* 3. Floating emoji reactions (absolute inset-0, overflow hidden) */}
+                {/* 2. Floating emoji reactions (absolute inset-0, overflow hidden) */}
                 <ReactionsOverlay latestReaction={broadcast.latestReaction} />
               </div>
 
