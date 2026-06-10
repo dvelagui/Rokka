@@ -14,6 +14,7 @@ import {
 import type { TableRow } from '@rokka/supabase'
 import { useAdminContext } from '../../../providers/AdminProvider'
 import RechargeModal from '../modals/RechargeModal'
+import TableQRModal from '../modals/TableQRModal'
 
 // ── TablesTab ─────────────────────────────────────────────────────────────────
 
@@ -29,6 +30,7 @@ export default function TablesTab() {
   } = useTables(bar?.id ?? null)
 
   const [rechargeTarget,  setRechargeTarget]  = useState<{ id: string; label: string } | null>(null)
+  const [qrTarget,        setQrTarget]        = useState<{ id: string; label: string } | null>(null)
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
   const [creatingTable,   setCreatingTable]   = useState(false)
   const [actionLoading,   setActionLoading]   = useState<string | null>(null) // tableId of in-progress action
@@ -198,6 +200,7 @@ export default function TablesTab() {
                 isConfirmingDelete={isConfirmingDelete}
                 onAttend={() => clearCall(table.id)}
                 onRecharge={() => setRechargeTarget({ id: table.id, label: table.label })}
+                onShowQR={() => setQrTarget({ id: table.id, label: table.label })}
                 onToggleActive={() => handleToggleActive(table)}
                 onBan={() => handleBan(table)}
                 onDelete={() => handleDelete(table)}
@@ -216,6 +219,15 @@ export default function TablesTab() {
           onClose={() => setRechargeTarget(null)}
         />
       )}
+
+      {/* Table QR modal */}
+      {qrTarget && (
+        <TableQRModal
+          tableId={qrTarget.id}
+          tableLabel={qrTarget.label}
+          onClose={() => setQrTarget(null)}
+        />
+      )}
     </>
   )
 }
@@ -231,6 +243,7 @@ interface TableCardProps {
   isConfirmingDelete: boolean
   onAttend: () => void
   onRecharge: () => void
+  onShowQR: () => void
   onToggleActive: () => void
   onBan: () => void
   onDelete: () => void
@@ -239,7 +252,7 @@ interface TableCardProps {
 
 function TableCard({
   table, isCalling, songCount, songLimit, isLoading, isConfirmingDelete,
-  onAttend, onRecharge, onToggleActive, onBan, onDelete, onCancelDelete,
+  onAttend, onRecharge, onShowQR, onToggleActive, onBan, onDelete, onCancelDelete,
 }: TableCardProps) {
   const isConnected = Boolean(table.connected_at)
 
@@ -303,6 +316,10 @@ function TableCard({
 
         <ActionBtn onClick={onRecharge} disabled={isLoading}>
           💳 Recargar
+        </ActionBtn>
+
+        <ActionBtn onClick={onShowQR} disabled={isLoading}>
+          📱 QR
         </ActionBtn>
 
         <ActionBtn onClick={onToggleActive} disabled={isLoading}>
