@@ -70,8 +70,24 @@ function formatChatTime(iso: string): string {
   }
 }
 
+// Bubble background classes — written out fully so Tailwind's scanner picks them up
+const BUBBLE_CLASSES = [
+  'bg-rokka-cyan/70',
+  'bg-rokka-purple/70',
+  'bg-rokka-fire/70',
+  'bg-rokka-gold/70',
+  'bg-rokka-green/70',
+  'bg-rokka-orange/70',
+] as const
+
+function bubbleClass(seed: string): string {
+  let hash = 0
+  for (let i = 0; i < seed.length; i++) hash = (hash * 31 + seed.charCodeAt(i)) | 0
+  return BUBBLE_CLASSES[Math.abs(hash) % BUBBLE_CLASSES.length]
+}
+
 function ChatPanel({ messages }: { messages: ChatMessage[] }) {
-  const visible = messages.slice(-30)
+  const visible = messages.slice(-20)
   const bottomRef = useRef<HTMLDivElement | null>(null)
 
   useEffect(() => {
@@ -79,44 +95,49 @@ function ChatPanel({ messages }: { messages: ChatMessage[] }) {
   }, [visible.length])
 
   return (
-    <div className="flex flex-col h-full">
-      <p className="text-white/35 text-xs font-bold uppercase tracking-widest px-5 pt-4 mb-3 shrink-0">
-        Chat en vivo
-      </p>
-      <div className="flex-1 overflow-y-auto px-5 pb-4 space-y-3 [scrollbar-width:none]">
-        {visible.length === 0 ? (
-          <p className="text-white/20 text-sm italic">Sin mensajes todavía</p>
-        ) : (
+    <div
+      className="absolute z-20 flex flex-col justify-end overflow-hidden pointer-events-none"
+      style={{
+        right: 'clamp(10px, 1.2vw, 20px)',
+        top: 'clamp(60px, 8vh, 90px)',
+        bottom: 'clamp(10px, 1.2vh, 20px)',
+        width: 'clamp(200px, 20vw, 340px)',
+      }}
+    >
+      <div className="flex flex-col justify-end gap-2 [scrollbar-width:none] overflow-hidden">
+        {visible.length > 0 && (
           <AnimatePresence mode="popLayout" initial={false}>
             {visible.map((msg) => (
               <motion.div
                 key={msg.id}
                 layout
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, height: 0, overflow: 'hidden', marginBottom: 0 }}
                 transition={{ duration: 0.3 }}
               >
                 {msg.message_type === 'reaction' ? (
-                  <span className="text-2xl leading-none">{msg.message}</span>
+                  <span className="block text-right text-3xl leading-none drop-shadow-lg">
+                    {msg.message}
+                  </span>
                 ) : (
-                  <div className="space-y-0.5">
+                  <div
+                    className={`ml-auto max-w-full rounded-2xl px-3 py-1.5 shadow-lg backdrop-blur-sm ${
+                      msg.message_type === 'admin' ? 'bg-rokka-cyan/70' : bubbleClass(msg.table_id ?? msg.id)
+                    }`}
+                  >
                     <p
-                      className={`text-[10px] font-semibold tracking-wide ${
-                        msg.message_type === 'admin' ? 'text-rokka-cyan' : 'text-white/35'
-                      }`}
+                      className="text-[10px] font-bold uppercase tracking-wide leading-none mb-0.5 text-white/80"
+                      style={{ textShadow: '0 1px 2px rgba(0,0,0,0.4)' }}
                     >
                       {msg.message_type === 'admin' ? '🎛 DJ' : 'Mesa'} · {formatChatTime(msg.created_at)}
                     </p>
-                    <div
-                      className={`rounded-xl px-3 py-1.5 text-sm leading-snug break-words ${
-                        msg.message_type === 'admin'
-                          ? 'bg-rokka-cyan/15 border border-rokka-cyan/25 text-white font-semibold'
-                          : 'bg-white/5 border border-white/[0.06] text-white/85'
-                      }`}
+                    <p
+                      className="text-white text-sm font-semibold leading-snug break-words"
+                      style={{ textShadow: '0 1px 3px rgba(0,0,0,0.5)' }}
                     >
                       {msg.message}
-                    </div>
+                    </p>
                   </div>
                 )}
               </motion.div>
@@ -388,8 +409,8 @@ function TVDisplay() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
           >
-            {/* ── Left: video (with all overlays) + now-playing strip ────── */}
-            <div className="flex flex-col overflow-hidden" style={{ width: '62%' }}>
+            {/* ── Video (with all overlays) + now-playing strip ───────────── */}
+            <div className="flex flex-col overflow-hidden w-full">
 
               {/* Video container — all overlays are absolute children here */}
               <div className="relative w-full bg-black flex-shrink-0" style={{ aspectRatio: '16 / 9' }}>
@@ -490,6 +511,9 @@ function TVDisplay() {
 
                 {/* 2. Floating emoji reactions (absolute inset-0, overflow hidden) */}
                 <ReactionsOverlay latestReaction={broadcast.latestReaction} />
+
+                {/* 3. Chat overlay — transparent, colored message bubbles */}
+                <ChatPanel messages={allMessages} />
               </div>
 
               {/* Now-playing strip below the video */}
@@ -544,11 +568,6 @@ function TVDisplay() {
                   )}
                 </div>
               </div>
-            </div>
-
-            {/* ── Right: chat panel ────────────────────────────────────────── */}
-            <div className="flex-1 flex flex-col border-l border-border overflow-hidden">
-              <ChatPanel messages={allMessages} />
             </div>
           </motion.div>
         )}
