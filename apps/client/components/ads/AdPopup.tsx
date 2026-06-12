@@ -103,6 +103,17 @@ export function AdPopup() {
                 ✕
               </button>
 
+              {/* Banner image / GIF */}
+              {currentAd.image_url && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={currentAd.image_url}
+                  alt={currentAd.title}
+                  className="w-full block"
+                  style={{ aspectRatio: '16 / 9', objectFit: 'cover' }}
+                />
+              )}
+
               {/* Content */}
               <div className="px-4 pt-4 pb-5 flex items-start gap-3">
                 <span className="text-[28px] leading-none shrink-0 mt-0.5">

@@ -115,6 +115,7 @@ export interface AdsRow {
   company_name:     string | null
   is_active:        boolean
   sort_order:       number
+  image_url:        string | null
 }
 
 export interface WaitersRow {

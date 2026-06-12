@@ -34,6 +34,7 @@ export async function createAd(
     isOwn?: boolean
     companyName?: string
     isActive?: boolean
+    imageUrl?: string
   },
 ): Promise<AdRow> {
   const supabase = getSupabaseBrowserClient()
@@ -49,6 +50,7 @@ export async function createAd(
       is_own:           data.isOwn ?? true,
       company_name:     data.companyName ?? null,
       is_active:        data.isActive ?? true,
+      image_url:        data.imageUrl ?? null,
     })
     .select()
     .single()
@@ -67,6 +69,7 @@ export async function updateAd(
     is_own: boolean
     company_name: string
     is_active: boolean
+    image_url: string | null
   }>,
 ): Promise<void> {
   const supabase = getSupabaseBrowserClient()

@@ -1,8 +1,8 @@
 'use client'
 
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { createAd, updateAd, addLogEntry } from '@rokka/supabase'
+import { createAd, updateAd, addLogEntry, getSupabaseBrowserClient } from '@rokka/supabase'
 import type { AdRow } from '@rokka/supabase'
 import { useAdminContext } from '../../../providers/AdminProvider'
 
@@ -37,8 +37,50 @@ export default function AdFormModal({ ad, barId, onSave, onClose }: Props) {
   const [isOwn,    setIsOwn]    = useState(ad?.is_own ?? true)
   const [company,  setCompany]  = useState(ad?.company_name ?? '')
   const [isActive, setIsActive] = useState(ad?.is_active ?? true)
+  const [imageUrl, setImageUrl] = useState<string | null>(ad?.image_url ?? null)
+  const [uploadingImage, setUploadingImage] = useState(false)
   const [saving,   setSaving]   = useState(false)
   const [error,    setError]    = useState('')
+
+  const imageFileRef = useRef<HTMLInputElement>(null)
+  const newAdIdRef   = useRef(crypto.randomUUID())
+
+  async function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    const allowed = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
+    if (!allowed.includes(file.type)) {
+      setError('Formato no soportado. Usa JPG, PNG, WebP o GIF.')
+      if (imageFileRef.current) imageFileRef.current.value = ''
+      return
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setError('La imagen debe pesar menos de 5 MB.')
+      if (imageFileRef.current) imageFileRef.current.value = ''
+      return
+    }
+
+    setUploadingImage(true)
+    setError('')
+    try {
+      const supabase = getSupabaseBrowserClient()
+      const ext  = file.name.split('.').pop() ?? 'jpg'
+      const id   = ad?.id ?? newAdIdRef.current
+      const path = `${barId}/${id}.${ext}`
+      const { error: upErr } = await supabase.storage
+        .from('ad-banners')
+        .upload(path, file, { upsert: true })
+      if (upErr) throw upErr
+      const { data: { publicUrl } } = supabase.storage.from('ad-banners').getPublicUrl(path)
+      setImageUrl(`${publicUrl}?v=${Date.now()}`)
+    } catch (err) {
+      setError((err as Error).message)
+    } finally {
+      setUploadingImage(false)
+      if (imageFileRef.current) imageFileRef.current.value = ''
+    }
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -57,6 +99,7 @@ export default function AdFormModal({ ad, barId, onSave, onClose }: Props) {
           is_own:           isOwn,
           company_name:     !isOwn ? (company.trim() || undefined) : undefined,
           is_active:        isActive,
+          image_url:        imageUrl,
         })
         const updated: AdRow = {
           ...ad,
@@ -68,6 +111,7 @@ export default function AdFormModal({ ad, barId, onSave, onClose }: Props) {
           is_own:       isOwn,
           company_name: !isOwn ? (company.trim() || null) : null,
           is_active:    isActive,
+          image_url:    imageUrl,
         }
         await addLogEntry(barId, admin?.email ?? 'admin', 'ad_updated', `Editó anuncio: ${title.trim()}`)
         onSave(updated)
@@ -81,6 +125,7 @@ export default function AdFormModal({ ad, barId, onSave, onClose }: Props) {
           isOwn,
           companyName:     !isOwn ? (company.trim() || undefined) : undefined,
           isActive,
+          imageUrl:        imageUrl ?? undefined,
         })
         await addLogEntry(barId, admin?.email ?? 'admin', 'ad_created', `Creó anuncio: ${title.trim()}`)
         onSave(created)
@@ -208,6 +253,50 @@ export default function AdFormModal({ ad, barId, onSave, onClose }: Props) {
                   ))}
                 </div>
               </div>
+            </div>
+
+            {/* Banner image / GIF */}
+            <div className="space-y-1.5">
+              <label className={labelCls}>Banner publicitario (imagen o GIF)</label>
+              <p className="text-[10px] text-white/30">
+                Tamaño recomendado: 1200 × 675 px (16:9), máx. 5 MB. Se acepta JPG, PNG, WebP o GIF.
+              </p>
+              <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => imageFileRef.current?.click()}
+                  disabled={uploadingImage}
+                  className="relative w-24 h-[54px] rounded-lg overflow-hidden shrink-0 border border-dashed border-white/20 hover:border-rokka-cyan/60 transition-colors flex items-center justify-center bg-[#1a1a1a]"
+                >
+                  {imageUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={imageUrl} alt="Banner" className="w-full h-full object-cover" />
+                  ) : (
+                    <span className="text-[10px] text-white/30">Subir</span>
+                  )}
+                  {uploadingImage && (
+                    <span className="absolute inset-0 bg-black/70 flex items-center justify-center text-[9px] text-white">
+                      ···
+                    </span>
+                  )}
+                </button>
+                {imageUrl && (
+                  <button
+                    type="button"
+                    onClick={() => setImageUrl(null)}
+                    className="text-[10px] text-rokka-red/70 hover:text-rokka-red transition-colors"
+                  >
+                    Quitar imagen
+                  </button>
+                )}
+              </div>
+              <input
+                ref={imageFileRef}
+                type="file"
+                accept="image/jpeg,image/png,image/webp,image/gif"
+                className="hidden"
+                onChange={handleImageUpload}
+              />
             </div>
 
             {/* Duration */}

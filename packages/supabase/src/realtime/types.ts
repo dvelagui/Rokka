@@ -85,6 +85,7 @@ export interface AdRow {
   company_name: string | null
   is_active: boolean
   sort_order: number
+  image_url: string | null
 }
 
 // ── Broadcast payloads ────────────────────────────────────────────────────────

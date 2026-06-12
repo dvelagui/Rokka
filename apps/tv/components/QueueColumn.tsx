@@ -1,7 +1,5 @@
 'use client'
 
-import { AnimatePresence, motion } from 'framer-motion'
-import { useAdRotation } from '@rokka/supabase'
 import type { QueueItemWithVotes } from '@rokka/supabase'
 
 const FIRE1 = '#FF4500'
@@ -9,16 +7,7 @@ const FIRE2 = '#FF6D00'
 const PURPLE = '#d500f9'
 
 interface Props {
-  barId: string
   queue: QueueItemWithVotes[]
-}
-
-function hexToRgba(hex: string, alpha: number): string {
-  const h = hex.replace('#', '')
-  const r = parseInt(h.slice(0, 2), 16)
-  const g = parseInt(h.slice(2, 4), 16)
-  const b = parseInt(h.slice(4, 6), 16)
-  return `rgba(${r},${g},${b},${alpha})`
 }
 
 // ── Queue card ────────────────────────────────────────────────────────────────
@@ -150,13 +139,8 @@ function QueueCard({ item, position }: { item: QueueItemWithVotes; position: num
 
 // ── QueueColumn ───────────────────────────────────────────────────────────────
 
-export function QueueColumn({ barId, queue }: Props) {
+export function QueueColumn({ queue }: Props) {
   const upcoming = queue.filter((q) => q.status === 'queued').slice(0, 5)
-  const { currentAd, isShowingAd, countdown } = useAdRotation(barId, {
-    mode: 'time',
-    initialDelaySec: 5,
-    intervalSec: 30,
-  })
 
   return (
     <div className="h-full flex flex-col gap-1.5 overflow-hidden">
@@ -170,74 +154,6 @@ export function QueueColumn({ barId, queue }: Props) {
           upcoming.map((item, i) => <QueueCard key={item.id} item={item} position={i + 1} />)
         )}
       </div>
-
-      {/* Ad banner — slides up from the bottom of the queue column */}
-      <AnimatePresence>
-        {isShowingAd && currentAd && (
-          <motion.div
-            key="ad"
-            initial={{ y: 30, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            exit={{ y: 30, opacity: 0 }}
-            transition={{ duration: 0.4, ease: 'easeOut' }}
-            className="shrink-0 flex items-center gap-2 rounded-xl"
-            style={{
-              padding: 'clamp(6px, 0.8vh, 10px) clamp(8px, 1vw, 12px)',
-              background: `linear-gradient(135deg, ${hexToRgba(currentAd.color, 0.28)} 0%, rgba(0,0,0,0.75) 85%)`,
-              border: `1px solid ${hexToRgba(currentAd.color, 0.5)}`,
-              backdropFilter: 'blur(8px)',
-              WebkitBackdropFilter: 'blur(8px)',
-            }}
-          >
-            <span style={{ fontSize: 'clamp(18px, 2.2vh, 28px)', lineHeight: 1 }}>{currentAd.emoji}</span>
-            <div className="flex-1 min-w-0">
-              {!currentAd.is_own && (
-                <span
-                  style={{
-                    fontSize: '7px',
-                    color: 'rgba(255,255,255,0.40)',
-                    textTransform: 'uppercase' as const,
-                    letterSpacing: '1.5px',
-                    fontWeight: 600,
-                  }}
-                >
-                  Publicidad
-                </span>
-              )}
-              <p
-                style={{
-                  fontSize: 'clamp(10px, 1.1vw, 14px)',
-                  fontWeight: 700,
-                  color: currentAd.color,
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  whiteSpace: 'nowrap',
-                  lineHeight: 1.2,
-                }}
-              >
-                {currentAd.title}
-              </p>
-              {currentAd.subtitle && (
-                <p
-                  style={{
-                    fontSize: 'clamp(8px, 0.9vw, 11px)',
-                    color: 'rgba(255,255,255,0.55)',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    whiteSpace: 'nowrap',
-                    lineHeight: 1.2,
-                  }}
-                >
-                  {currentAd.subtitle}
-                </p>
-              )}
-            </div>
-            <span style={{ fontSize: '9px', color: 'rgba(255,255,255,0.30)', fontFamily: 'monospace', flexShrink: 0 }}>
-              {countdown}s
-            </span>
-          </motion.div>
-        )}
-      </AnimatePresence>
     </div>
   )
 }

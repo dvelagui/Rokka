@@ -12,6 +12,7 @@ import { VideoHeaderOverlay } from '../components/VideoHeaderOverlay'
 import { ReactionsOverlay } from '../components/ReactionsOverlay'
 import { BottomBar } from '../components/BottomBar'
 import { QueueColumn } from '../components/QueueColumn'
+import { AdBanner } from '../components/AdBanner'
 
 // ── Burn-in prevention ────────────────────────────────────────────────────────
 // Shifts static elements 1–2 px every 5 minutes. Imperceptible from 2+ meters
@@ -511,8 +512,20 @@ function TVDisplay() {
                 <ChatPanel messages={allMessages} />
               </div>
               <div style={{ height: '60%' }} className="overflow-hidden">
-                <QueueColumn barId={barId} queue={queue.queue} />
+                <QueueColumn queue={queue.queue} />
               </div>
+            </div>
+
+            {/* 4. Left column overlay — anuncio rotativo ────────────────── */}
+            <div
+              className="absolute z-20"
+              style={{
+                left: 'clamp(10px, 1.2vw, 20px)',
+                top: 'clamp(60px, 8vh, 90px)',
+                width: 'clamp(220px, 20vw, 360px)',
+              }}
+            >
+              <AdBanner barId={barId} />
             </div>
           </motion.div>
         )}
