@@ -117,19 +117,6 @@ body {
    cleanly to TV viewport widths, so we use plain media queries here.
    ─────────────────────────────────────────────────────────────────────────── */
 
-/* 5-column queue grid that collapses to 3 columns on narrow viewports */
-.tv-queue-grid {
-  display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: clamp(4px, 0.5vw, 8px);
-}
-
-@media (max-width: 900px) {
-  .tv-queue-grid {
-    grid-template-columns: repeat(3, 1fr);
-  }
-}
-
 /* Hide the voting card on very small/portrait displays */
 @media (max-width: 700px) {
   .tv-vote-card {

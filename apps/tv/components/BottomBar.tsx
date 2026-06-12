@@ -2,17 +2,13 @@
 
 import { useEffect, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
-import { getVideoDetails, useAdRotation } from '@rokka/supabase'
+import { getVideoDetails } from '@rokka/supabase'
 import type { QueueItemWithVotes, ChatMessage } from '@rokka/supabase'
-import { AdOverlay } from './AdOverlay'
 
 const FIRE1 = '#FF4500'
-const FIRE2 = '#FF6D00'
-const PURPLE = '#d500f9'
 const CYAN = '#00e5ff'
 
 interface Props {
-  barId: string
   currentSong: QueueItemWithVotes | null
   queue: QueueItemWithVotes[]
   pinnedMessage: ChatMessage | null
@@ -26,214 +22,10 @@ function formatTime(s: number): string {
   return `${m}:${sec.toString().padStart(2, '0')}`
 }
 
-// ── Queue card ────────────────────────────────────────────────────────────────
-
-interface CardProps {
-  item: QueueItemWithVotes
-  position: number
-  isTransparent: boolean
-}
-
-function QueueCard({ item, position, isTransparent }: CardProps) {
-  const hasBid = item.bid_amount > 0
-  const isFirst = position === 1
-  const isSecond = position === 2
-
-  let borderColor = 'rgba(255,255,255,0.09)'
-  let bgColor = 'rgba(255,255,255,0.04)'
-  let boxShadow = 'none'
-  let cardAnimation = ''
-  let posColor = 'rgba(255,255,255,0.25)'
-  let emojiAnimation = ''
-
-  if (isFirst && hasBid) {
-    borderColor = FIRE1
-    bgColor = 'rgba(255,69,0,0.14)'
-    boxShadow = '0 0 18px rgba(255,69,0,0.24)'
-    cardAnimation = 'itemfire 1.2s ease-in-out infinite alternate'
-    posColor = FIRE1
-    emojiAnimation = 'bounce 0.6s ease-in-out infinite alternate'
-  } else if (isSecond && hasBid) {
-    borderColor = FIRE2
-    bgColor = 'rgba(255,109,0,0.10)'
-    posColor = FIRE2
-    emojiAnimation = 'bounce 0.6s ease-in-out infinite alternate'
-  } else if (hasBid) {
-    borderColor = PURPLE
-    bgColor = 'rgba(213,0,249,0.08)'
-    posColor = PURPLE
-  }
-
-  return (
-    <div
-      style={{
-        opacity: isTransparent ? 0.25 : 1,
-        transition: 'opacity 0.4s ease',
-        borderLeft: `3px solid ${borderColor}`,
-        background: bgColor,
-        boxShadow,
-        animation: cardAnimation,
-        borderRadius: 'clamp(4px, 0.5vw, 8px)',
-        padding: 'clamp(5px, 0.7vh, 10px) clamp(6px, 0.8vw, 12px)',
-        display: 'flex',
-        flexDirection: 'column' as const,
-        gap: 'clamp(1px, 0.2vh, 3px)',
-        minWidth: 0,
-        minHeight: 'clamp(60px, 8vh, 100px)',
-        overflow: 'hidden',
-      }}
-    >
-      {/* Position number + fire emoji */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <span
-          style={{
-            fontSize: 'clamp(8px, 0.9vw, 13px)',
-            fontWeight: 800,
-            color: posColor,
-            fontVariantNumeric: 'tabular-nums',
-          }}
-        >
-          {position}
-        </span>
-        {isFirst && hasBid && (
-          <span
-            style={{
-              fontSize: 'clamp(10px, 1.2vw, 16px)',
-              animation: emojiAnimation,
-              display: 'inline-block',
-            }}
-          >
-            🔥
-          </span>
-        )}
-        {isSecond && hasBid && (
-          <span
-            style={{
-              fontSize: 'clamp(10px, 1.2vw, 16px)',
-              animation: emojiAnimation,
-              display: 'inline-block',
-            }}
-          >
-            🟠
-          </span>
-        )}
-      </div>
-
-      {/* Title */}
-      <p
-        style={{
-          fontSize: 'clamp(10px, 1.2vw, 16px)',
-          fontWeight: 700,
-          color: 'white',
-          overflow: 'hidden',
-          textOverflow: 'ellipsis',
-          whiteSpace: 'nowrap',
-          lineHeight: 1.2,
-        }}
-      >
-        {item.title}
-      </p>
-
-      {/* Artist */}
-      <p
-        style={{
-          fontSize: 'clamp(9px, 1vw, 13px)',
-          color: 'rgba(255,255,255,0.45)',
-          overflow: 'hidden',
-          textOverflow: 'ellipsis',
-          whiteSpace: 'nowrap',
-          lineHeight: 1.2,
-        }}
-      >
-        {item.artist}
-      </p>
-
-      {/* Mesa + bid */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '4px', flexWrap: 'wrap' as const }}>
-        {item.table_label && (
-          <span
-            style={{
-              fontSize: 'clamp(8px, 0.85vw, 11px)',
-              color: 'rgba(255,255,255,0.30)',
-            }}
-          >
-            Mesa {item.table_label}
-          </span>
-        )}
-        {hasBid && (
-          <span
-            style={{
-              fontSize: 'clamp(8px, 0.85vw, 11px)',
-              fontWeight: 700,
-              color: isFirst ? FIRE1 : isSecond ? FIRE2 : PURPLE,
-            }}
-          >
-            💰 {item.bid_amount}
-          </span>
-        )}
-      </div>
-
-      {/* Dedication */}
-      {item.dedication && (
-        <p
-          style={{
-            fontSize: 'clamp(7px, 0.8vw, 10px)',
-            color: 'rgba(255,255,255,0.30)',
-            fontStyle: 'italic',
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            whiteSpace: 'nowrap',
-          }}
-        >
-          💌 {item.dedication}
-        </p>
-      )}
-    </div>
-  )
-}
-
-// ── Empty queue slot ──────────────────────────────────────────────────────────
-
-function EmptySlot({ position, isTransparent }: { position: number; isTransparent: boolean }) {
-  return (
-    <div
-      style={{
-        opacity: isTransparent ? 0.12 : 0.28,
-        transition: 'opacity 0.4s ease',
-        borderLeft: '3px solid rgba(255,255,255,0.05)',
-        background: 'rgba(255,255,255,0.02)',
-        borderRadius: 'clamp(4px, 0.5vw, 8px)',
-        padding: 'clamp(5px, 0.7vh, 10px) clamp(6px, 0.8vw, 12px)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        minHeight: 'clamp(60px, 8vh, 100px)',
-      }}
-    >
-      <span
-        style={{
-          fontSize: 'clamp(8px, 0.9vw, 13px)',
-          color: 'rgba(255,255,255,0.12)',
-          fontWeight: 800,
-          fontVariantNumeric: 'tabular-nums',
-        }}
-      >
-        {position}
-      </span>
-    </div>
-  )
-}
-
 // ── BottomBar ─────────────────────────────────────────────────────────────────
 
-export function BottomBar({ barId, currentSong, queue, pinnedMessage, isPlaying, onReset }: Props) {
-  const { currentAd, isShowingAd, countdown } = useAdRotation(barId, {
-    mode: 'time',
-    initialDelaySec: 5,
-    intervalSec: 30,
-  })
-
-  const upcomingQueue = queue.filter((q) => q.status === 'queued').slice(0, 5)
+export function BottomBar({ currentSong, queue, pinnedMessage, isPlaying, onReset }: Props) {
+  const upcomingQueue = queue.filter((q) => q.status === 'queued')
   const topHasBid = (upcomingQueue[0]?.bid_amount ?? 0) > 0
 
   // ── Progress tracking ────────────────────────────────────────────────────────
@@ -266,7 +58,9 @@ export function BottomBar({ barId, currentSong, queue, pinnedMessage, isPlaying,
     <div
       className="shrink-0 w-full flex flex-col"
       style={{
-        background: 'rgba(0,0,0,0.97)',
+        background: 'rgba(0,0,0,0.55)',
+        backdropFilter: 'blur(10px)',
+        WebkitBackdropFilter: 'blur(10px)',
         borderTop: `2px solid ${topHasBid ? FIRE1 : 'rgba(255,255,255,0.07)'}`,
         transition: 'border-color 0.5s ease',
       }}
@@ -426,37 +220,6 @@ export function BottomBar({ barId, currentSong, queue, pinnedMessage, isPlaying,
           </p>
         </div>
       )}
-
-      {/* ── Upcoming queue — 5-column grid + inline ad overlay ──────────────── */}
-      <div
-        style={{
-          position: 'relative',
-          padding: 'clamp(4px, 0.5vh, 7px) clamp(12px, 1.5vw, 20px) clamp(3px, 0.4vh, 5px)',
-        }}
-      >
-        <div className="tv-queue-grid">
-          {upcomingQueue.map((item, i) => (
-            <QueueCard
-              key={item.id}
-              item={item}
-              position={i + 1}
-              isTransparent={isShowingAd && i >= 3}
-            />
-          ))}
-          {Array.from({ length: Math.max(0, 5 - upcomingQueue.length) }).map((_, i) => (
-            <EmptySlot
-              key={`empty-${i}`}
-              position={upcomingQueue.length + i + 1}
-              isTransparent={isShowingAd && upcomingQueue.length + i >= 3}
-            />
-          ))}
-        </div>
-
-        {/* Ad slides in from the right, covering slots 4–5 */}
-        <AnimatePresence>
-          {isShowingAd && currentAd && <AdOverlay key="ad" ad={currentAd} countdown={countdown} />}
-        </AnimatePresence>
-      </div>
 
       {/* Dev reset — intentionally faint */}
       <div

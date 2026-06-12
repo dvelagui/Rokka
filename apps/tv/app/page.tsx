@@ -11,6 +11,7 @@ import { YouTubePlayer } from '../components/YouTubePlayer'
 import { VideoHeaderOverlay } from '../components/VideoHeaderOverlay'
 import { ReactionsOverlay } from '../components/ReactionsOverlay'
 import { BottomBar } from '../components/BottomBar'
+import { QueueColumn } from '../components/QueueColumn'
 
 // ── Burn-in prevention ────────────────────────────────────────────────────────
 // Shifts static elements 1–2 px every 5 minutes. Imperceptible from 2+ meters
@@ -72,12 +73,12 @@ function formatChatTime(iso: string): string {
 
 // Bubble background classes — written out fully so Tailwind's scanner picks them up
 const BUBBLE_CLASSES = [
-  'bg-rokka-cyan/70',
-  'bg-rokka-purple/70',
-  'bg-rokka-fire/70',
-  'bg-rokka-gold/70',
-  'bg-rokka-green/70',
-  'bg-rokka-orange/70',
+  'bg-rokka-cyan/10',
+  'bg-rokka-purple/10',
+  'bg-rokka-fire/10',
+  'bg-rokka-gold/10',
+  'bg-rokka-green/10',
+  'bg-rokka-orange/10',
 ] as const
 
 function bubbleClass(seed: string): string {
@@ -95,15 +96,7 @@ function ChatPanel({ messages }: { messages: ChatMessage[] }) {
   }, [visible.length])
 
   return (
-    <div
-      className="absolute z-20 flex flex-col justify-end overflow-hidden pointer-events-none"
-      style={{
-        right: 'clamp(10px, 1.2vw, 20px)',
-        top: 'clamp(60px, 8vh, 90px)',
-        bottom: 'clamp(10px, 1.2vh, 20px)',
-        width: 'clamp(200px, 20vw, 340px)',
-      }}
-    >
+    <div className="h-full flex flex-col justify-end overflow-hidden pointer-events-none">
       <div className="flex flex-col justify-end gap-2 [scrollbar-width:none] overflow-hidden">
         {visible.length > 0 && (
           <AnimatePresence mode="popLayout" initial={false}>
@@ -123,7 +116,7 @@ function ChatPanel({ messages }: { messages: ChatMessage[] }) {
                 ) : (
                   <div
                     className={`ml-auto max-w-full rounded-2xl px-3 py-1.5 shadow-lg backdrop-blur-sm ${
-                      msg.message_type === 'admin' ? 'bg-rokka-cyan/70' : bubbleClass(msg.table_id ?? msg.id)
+                      msg.message_type === 'admin' ? 'bg-rokka-cyan/10' : bubbleClass(msg.table_id ?? msg.id)
                     }`}
                   >
                     <p
@@ -404,178 +397,129 @@ function TVDisplay() {
         ) : (
           <motion.div
             key="display"
-            className="flex-1 flex overflow-hidden"
+            className="flex-1 relative w-full bg-black overflow-hidden"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
           >
-            {/* ── Video (with all overlays) + now-playing strip ───────────── */}
-            <div className="flex flex-col overflow-hidden w-full">
+            {/* ── Video (with all overlays), filling the entire screen ─────── */}
 
-              {/* Video container — all overlays are absolute children here */}
-              <div className="relative w-full bg-black flex-shrink-0" style={{ aspectRatio: '16 / 9' }}>
+            {/* YouTube player (or music note placeholder) */}
+            <AnimatePresence mode="wait">
+              {started && currentSong.youtube_video_id ? (
+                <motion.div
+                  key={`player-${currentSong.id}`}
+                  className="absolute inset-0"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.5 }}
+                >
+                  <YouTubePlayer
+                    videoId={currentSong.youtube_video_id}
+                    isPlaying={isPlaying}
+                    onVideoEnd={handleVideoEnd}
+                    onError={handleVideoError}
+                    onPlaying={handleVideoPlaying}
+                  />
+                </motion.div>
+              ) : (
+                <motion.div
+                  key="no-video"
+                  className="absolute inset-0 flex items-center justify-center"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                >
+                  <span style={{ fontSize: 'clamp(60px, 10vw, 120px)' }}>🎵</span>
+                </motion.div>
+              )}
+            </AnimatePresence>
 
-                {/* YouTube player (or music note placeholder) */}
-                <AnimatePresence mode="wait">
-                  {started && currentSong.youtube_video_id ? (
-                    <motion.div
-                      key={`player-${currentSong.id}`}
-                      className="absolute inset-0"
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      exit={{ opacity: 0 }}
-                      transition={{ duration: 0.5 }}
-                    >
-                      <YouTubePlayer
-                        videoId={currentSong.youtube_video_id}
-                        isPlaying={isPlaying}
-                        onVideoEnd={handleVideoEnd}
-                        onError={handleVideoError}
-                        onPlaying={handleVideoPlaying}
-                      />
-                    </motion.div>
-                  ) : (
-                    <motion.div
-                      key="no-video"
-                      className="absolute inset-0 flex items-center justify-center"
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                    >
-                      <span style={{ fontSize: 'clamp(60px, 10vw, 120px)' }}>🎵</span>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
+            {/* Loading spinner — visible while YouTube buffers after a song change */}
+            <AnimatePresence>
+              {videoLoading && currentSong.youtube_video_id && (
+                <motion.div
+                  key="vid-loading"
+                  className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none"
+                  style={{ zIndex: 11 }}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.25, delay: 0.4 }}
+                >
+                  <div
+                    className="animate-spin"
+                    style={{
+                      width: 'clamp(32px, 3.5vw, 50px)',
+                      height: 'clamp(32px, 3.5vw, 50px)',
+                      borderRadius: '50%',
+                      border: '3px solid rgba(0,229,255,0.15)',
+                      borderTopColor: '#00e5ff',
+                      marginBottom: 'clamp(10px, 1.2vh, 16px)',
+                    }}
+                  />
+                  <p
+                    style={{
+                      fontSize: 'clamp(11px, 1.3vw, 17px)',
+                      color: 'rgba(255,255,255,0.6)',
+                      fontWeight: 600,
+                      maxWidth: '55%',
+                      textAlign: 'center' as const,
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap' as const,
+                      textShadow: '0 1px 6px rgba(0,0,0,0.8)',
+                    }}
+                  >
+                    {currentSong.title}
+                  </p>
+                </motion.div>
+              )}
+            </AnimatePresence>
 
-                {/* Loading spinner — visible while YouTube buffers after a song change */}
-                <AnimatePresence>
-                  {videoLoading && currentSong.youtube_video_id && (
-                    <motion.div
-                      key="vid-loading"
-                      className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none"
-                      style={{ zIndex: 11 }}
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      exit={{ opacity: 0 }}
-                      transition={{ duration: 0.25, delay: 0.4 }}
-                    >
-                      <div
-                        className="animate-spin"
-                        style={{
-                          width: 'clamp(32px, 3.5vw, 50px)',
-                          height: 'clamp(32px, 3.5vw, 50px)',
-                          borderRadius: '50%',
-                          border: '3px solid rgba(0,229,255,0.15)',
-                          borderTopColor: '#00e5ff',
-                          marginBottom: 'clamp(10px, 1.2vh, 16px)',
-                        }}
-                      />
-                      <p
-                        style={{
-                          fontSize: 'clamp(11px, 1.3vw, 17px)',
-                          color: 'rgba(255,255,255,0.6)',
-                          fontWeight: 600,
-                          maxWidth: '55%',
-                          textAlign: 'center' as const,
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                          whiteSpace: 'nowrap' as const,
-                          textShadow: '0 1px 6px rgba(0,0,0,0.8)',
-                        }}
-                      >
-                        {currentSong.title}
-                      </p>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
+            {/* Gradient top — ensures header overlay is always readable */}
+            <div
+              className="absolute inset-x-0 top-0 h-2/5 bg-gradient-to-b from-black/60 to-transparent z-10"
+              style={{ pointerEvents: 'none' }}
+            />
 
-                {/* Gradient top — ensures header overlay is always readable */}
-                <div
-                  className="absolute inset-x-0 top-0 h-2/5 bg-gradient-to-b from-black/60 to-transparent z-10"
-                  style={{ pointerEvents: 'none' }}
-                />
+            {/* Gradient bottom — ensures bottom bar is always readable */}
+            <div
+              className="absolute inset-x-0 bottom-0 h-2/5 bg-gradient-to-t from-black/70 to-transparent z-10"
+              style={{ pointerEvents: 'none' }}
+            />
 
-                {/* Gradient bottom — ensures chat overlay is always readable */}
-                <div
-                  className="absolute inset-x-0 bottom-0 h-2/5 bg-gradient-to-t from-black/70 to-transparent z-10"
-                  style={{ pointerEvents: 'none' }}
-                />
+            {/* ── Overlays (z-index > gradients) ──────────────────────── */}
 
-                {/* ── Overlays (z-index > gradients) ──────────────────────── */}
+            {/* 1. Header: bar logo + voting bar + ROKKA branding */}
+            <VideoHeaderOverlay bar={bar} keepVotes={votes.keepVotes} skipVotes={votes.skipVotes} />
 
-                {/* 1. Header: bar logo + voting bar + ROKKA branding */}
-                <VideoHeaderOverlay
-                  bar={bar}
-                  keepVotes={votes.keepVotes}
-                  skipVotes={votes.skipVotes}
-                />
+            {/* 2. Floating emoji reactions (absolute inset-0, overflow hidden) */}
+            <ReactionsOverlay latestReaction={broadcast.latestReaction} />
 
-                {/* 2. Floating emoji reactions (absolute inset-0, overflow hidden) */}
-                <ReactionsOverlay latestReaction={broadcast.latestReaction} />
-
-                {/* 3. Chat overlay — transparent, colored message bubbles */}
+            {/* 3. Right column overlay — chat (40%) + queue (60%) ────────── */}
+            <div
+              className="absolute z-20 flex flex-col gap-2"
+              style={{
+                right: 'clamp(10px, 1.2vw, 20px)',
+                top: 'clamp(60px, 8vh, 90px)',
+                bottom: 'clamp(10px, 1.2vh, 20px)',
+                width: 'clamp(220px, 20vw, 360px)',
+              }}
+            >
+              <div style={{ height: '40%' }} className="overflow-hidden">
                 <ChatPanel messages={allMessages} />
               </div>
-
-              {/* Now-playing strip below the video */}
-              <div className="flex-1 flex flex-col justify-between px-6 py-4 bg-card overflow-hidden">
-                <AnimatePresence mode="wait">
-                  <motion.div
-                    key={currentSong.id}
-                    initial={{ opacity: 0, y: 14 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -14 }}
-                    transition={{ duration: 0.4 }}
-                    className="min-w-0 space-y-1"
-                  >
-                    <p className="text-white/30 text-xs font-bold uppercase tracking-widest">
-                      Sonando ahora
-                    </p>
-                    <h2 className="text-white text-3xl font-black leading-tight line-clamp-1">
-                      {currentSong.title}
-                    </h2>
-                    <p className="text-white/55 text-xl line-clamp-1">{currentSong.artist}</p>
-                    <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 pt-1">
-                      {currentSong.table_label && (
-                        <span className="text-white/30 text-sm">Mesa {currentSong.table_label}</span>
-                      )}
-                      {currentSong.bid_amount > 0 && (
-                        <span className="text-rokka-gold text-sm font-bold">
-                          💰 {currentSong.bid_amount} créditos
-                        </span>
-                      )}
-                      {currentSong.dedication && (
-                        <span className="text-white/45 text-sm italic line-clamp-1">
-                          ❤️ &ldquo;{currentSong.dedication}&rdquo;
-                        </span>
-                      )}
-                    </div>
-                  </motion.div>
-                </AnimatePresence>
-
-                {/* Textual vote summary (reinforces the in-video bar) */}
-                <div className="flex items-center gap-2 text-sm">
-                  <span className="text-rokka-cyan font-bold">
-                    👍 {votes.keepVotes} keep
-                  </span>
-                  <span className="text-white/20">·</span>
-                  <span className="text-rokka-purple font-bold">
-                    ⏭ {votes.skipVotes} skip
-                  </span>
-                  {votes.thresholdReached && (
-                    <span className="ml-2 text-xs text-rokka-red font-bold uppercase tracking-wide animate-pulse">
-                      ⚡ Skip inminente
-                    </span>
-                  )}
-                </div>
+              <div style={{ height: '60%' }} className="overflow-hidden">
+                <QueueColumn barId={barId} queue={queue.queue} />
               </div>
             </div>
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* ── Bottom bar: pinned message + progress + queue grid + inline ad ── */}
+      {/* ── Bottom bar: pinned message + progress ───────────────────────── */}
       <BottomBar
-        barId={barId}
         currentSong={currentSong}
         queue={queue.queue}
         pinnedMessage={pinnedMessage}
