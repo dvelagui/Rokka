@@ -35,7 +35,7 @@ export function useAddSong(): UseAddSongReturn {
 
   const [pending, setPending] = useState<SongToAdd | null>(null)
 
-  const maxSongs    = bar?.config.max_canciones_por_mesa ?? 4
+  const maxSongs    = bar?.config.max_canciones_por_mesa ?? 3
   const myQueueCount = queue.queue.filter(
     (item) => item.table_id === table?.tableId && item.status === 'queued',
   ).length

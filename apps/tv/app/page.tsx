@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { useRouter } from 'next/navigation'
-import { clearTVSession, playNextSong } from '@rokka/supabase'
+import { clearTVSession, playNextSong, skipSong, sendAdminMessage } from '@rokka/supabase'
 import type { ChatMessage } from '@rokka/supabase'
 import { TVProvider, useTVContext } from '../providers/TVProvider'
 import { RealtimeProvider, useTVRealtime } from '../providers/RealtimeProvider'
@@ -281,17 +281,23 @@ function TVDisplay() {
   }, [barId])
 
   // Auto-skip when YouTube reports a video error (unavailable, geo-blocked, etc.)
+  // Marca la canción como 'skipped' (devuelve créditos de puja si aplica) en vez
+  // de 'played', y avisa en el chat — así no "desaparece" sin explicación.
   const handleVideoError = useCallback(
     async (errorCode: number) => {
       console.warn(`[TV] YouTube error ${errorCode} for "${currentSong?.title}" — skipping`)
-      if (!barId) return
+      if (!barId || !currentSong) return
       try {
-        await playNextSong(barId)
+        await skipSong(currentSong.id, barId)
+        await sendAdminMessage(
+          barId,
+          `⚠️ "${currentSong.title}" no se pudo reproducir (video no disponible) y fue omitida`,
+        )
       } catch {
         // Admin can advance manually from the panel
       }
     },
-    [barId, currentSong?.title],
+    [barId, currentSong],
   )
 
   // Clear loading spinner the moment YouTube starts playing
