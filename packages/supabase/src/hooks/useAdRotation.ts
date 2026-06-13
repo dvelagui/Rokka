@@ -90,10 +90,12 @@ export function useAdRotation(
 
   useEffect(() => {
     if (!barId) return
-    getAds(barId, true).then((data) => {
-      setAds(data)
-      rotationRef.current = buildRotationQueue(data)
-    })
+    getAds(barId, true)
+      .then((data) => {
+        setAds(data)
+        rotationRef.current = buildRotationQueue(data)
+      })
+      .catch((err) => console.error('useAdRotation: error loading ads', err))
   }, [barId])
 
   // ── Rebuild rotation queue when ads change ────────────────────────────────────
@@ -228,10 +230,12 @@ export function useAdRotation(
           filter: `bar_id=eq.${barId}`,
         },
         () => {
-          getAds(barId, true).then((data) => {
-            setAds(data)
-            rotationRef.current = buildRotationQueue(data)
-          })
+          getAds(barId, true)
+            .then((data) => {
+              setAds(data)
+              rotationRef.current = buildRotationQueue(data)
+            })
+            .catch((err) => console.error('useAdRotation: error reloading ads', err))
         },
       )
       .subscribe()

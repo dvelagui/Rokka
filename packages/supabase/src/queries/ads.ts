@@ -14,7 +14,19 @@ export async function getAds(barId: string, activeOnly = true): Promise<AdRow[]>
 
   if (activeOnly) {
     const { data, error } = await supabase.rpc('get_active_ads', { p_bar_id: barId })
-    if (error) throw new Error(error.message)
+    // Si la migración de programación de anuncios todavía no se aplicó, la RPC
+    // `get_active_ads` no existe — usamos un filtro básico como respaldo para
+    // que los anuncios sigan funcionando mientras se aplica la migración.
+    if (error) {
+      const { data: fallback, error: fallbackError } = await supabase
+        .from('ads')
+        .select('*')
+        .eq('bar_id', barId)
+        .eq('is_active', true)
+        .order('sort_order', { ascending: true })
+      if (fallbackError) throw new Error(fallbackError.message)
+      return (fallback ?? []) as AdRow[]
+    }
     return (data ?? []) as AdRow[]
   }
 
