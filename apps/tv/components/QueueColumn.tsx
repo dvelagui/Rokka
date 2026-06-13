@@ -75,7 +75,8 @@ function QueueCard({ item, position }: { item: QueueItemWithVotes; position: num
         </div>
       )}
 
-      {/* Title */}
+      {/* Title — alto fijo para que no se "tape" cuando la lista es larga
+          y las cards se comprimen */}
       <p
         style={{
           fontSize: 'clamp(10px, 1.1vw, 15px)',
@@ -85,6 +86,8 @@ function QueueCard({ item, position }: { item: QueueItemWithVotes; position: num
           textOverflow: 'ellipsis',
           whiteSpace: 'nowrap',
           lineHeight: 1.2,
+          height: 'clamp(12px, 1.32vw, 18px)',
+          flexShrink: 0,
           textShadow: '0 1px 3px rgba(0,0,0,0.6)',
         }}
       >

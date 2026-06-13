@@ -13,6 +13,7 @@ import { ReactionsOverlay } from '../components/ReactionsOverlay'
 import { BottomBar } from '../components/BottomBar'
 import { QueueColumn } from '../components/QueueColumn'
 import { AdBanner } from '../components/AdBanner'
+import { VotingOverlay } from '../components/VotingOverlay'
 
 // ── Burn-in prevention ────────────────────────────────────────────────────────
 // Shifts static elements 1–2 px every 5 minutes. Imperceptible from 2+ meters
@@ -504,6 +505,9 @@ function TVDisplay() {
             {/* 2. Floating emoji reactions (absolute inset-0, overflow hidden) */}
             <ReactionsOverlay latestReaction={broadcast.latestReaction} />
 
+            {/* 2b. Votación en vivo — parte superior central */}
+            <VotingOverlay keepVotes={votes.keepVotes} skipVotes={votes.skipVotes} />
+
             {/* 3. Right column overlay — chat (40%) + queue (60%) ────────── */}
             <div
               className="absolute z-20 flex flex-col gap-2"
@@ -543,8 +547,6 @@ function TVDisplay() {
         queue={queue.queue}
         pinnedMessage={pinnedMessage}
         isPlaying={isPlaying}
-        keepVotes={votes.keepVotes}
-        skipVotes={votes.skipVotes}
         onReset={handleReset}
       />
 
