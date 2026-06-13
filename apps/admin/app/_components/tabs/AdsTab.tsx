@@ -3,8 +3,10 @@
 import { useState, useEffect } from 'react'
 import { getAds, deleteAd, toggleAdActive, updateBarConfig, addLogEntry } from '@rokka/supabase'
 import type { AdRow } from '@rokka/supabase'
+import { formatDate } from '@rokka/shared'
 import { useAdminContext } from '../../../providers/AdminProvider'
 import AdFormModal from '../modals/AdFormModal'
+import AdReportModal from '../modals/AdReportModal'
 
 // ── AdsTab ────────────────────────────────────────────────────────────────────
 
@@ -16,6 +18,7 @@ export default function AdsTab() {
   const [togglingId,      setTogglingId]      = useState<string | null>(null)
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
   const [formTarget,      setFormTarget]      = useState<AdRow | 'create' | null>(null)
+  const [showReport,      setShowReport]      = useState(false)
 
   useEffect(() => {
     if (!bar?.id) return
@@ -101,12 +104,20 @@ export default function AdsTab() {
       {/* Bar ads header */}
       <div className="flex items-center justify-between mb-3">
         <p className="text-xs text-white/30">Anuncios del Bar</p>
-        <button
-          onClick={() => setFormTarget('create')}
-          className="text-xs px-3 py-1.5 rounded-lg bg-rokka-cyan/15 border border-rokka-cyan/40 text-rokka-cyan font-semibold hover:bg-rokka-cyan/25 transition-colors"
-        >
-          + Nuevo
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={() => setShowReport(true)}
+            className="text-xs px-3 py-1.5 rounded-lg border border-[#2a2a2a] text-white/50 font-semibold hover:text-white/80 hover:border-white/30 transition-colors"
+          >
+            📊 Informe
+          </button>
+          <button
+            onClick={() => setFormTarget('create')}
+            className="text-xs px-3 py-1.5 rounded-lg bg-rokka-cyan/15 border border-rokka-cyan/40 text-rokka-cyan font-semibold hover:bg-rokka-cyan/25 transition-colors"
+          >
+            + Nuevo
+          </button>
+        </div>
       </div>
 
       {/* List */}
@@ -141,6 +152,9 @@ export default function AdsTab() {
           onClose={() => setFormTarget(null)}
         />
       )}
+
+      {/* Report modal */}
+      {showReport && <AdReportModal barId={bar?.id ?? ''} onClose={() => setShowReport(false)} />}
     </>
   )
 }
@@ -195,6 +209,27 @@ function AdCard({
           <span className="text-[9px] text-white/25">{ad.duration_seconds}s</span>
         </div>
       </div>
+
+      {/* Schedule badges */}
+      {(ad.start_date || ad.end_date || ad.time_start || ad.time_end || ad.max_impressions) && (
+        <div className="flex items-center gap-1.5 flex-wrap">
+          {(ad.start_date || ad.end_date) && (
+            <span className="text-[9px] px-2 py-0.5 rounded-full border border-[#2a2a2a] text-white/40">
+              📅 {ad.start_date ? formatDate(ad.start_date) : '…'} – {ad.end_date ? formatDate(ad.end_date) : '…'}
+            </span>
+          )}
+          {(ad.time_start || ad.time_end) && (
+            <span className="text-[9px] px-2 py-0.5 rounded-full border border-[#2a2a2a] text-white/40">
+              🕐 {ad.time_start?.slice(0, 5) ?? '00:00'} – {ad.time_end?.slice(0, 5) ?? '23:59'}
+            </span>
+          )}
+          {ad.max_impressions && (
+            <span className="text-[9px] px-2 py-0.5 rounded-full border border-[#2a2a2a] text-white/40">
+              👁 {ad.impressions_count}/{ad.max_impressions}
+            </span>
+          )}
+        </div>
+      )}
 
       {/* Action buttons */}
       <div className="flex items-center gap-1.5 flex-wrap">

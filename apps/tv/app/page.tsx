@@ -498,8 +498,8 @@ function TVDisplay() {
 
             {/* ── Overlays (z-index > gradients) ──────────────────────── */}
 
-            {/* 1. Header: bar logo + voting bar + ROKKA branding */}
-            <VideoHeaderOverlay bar={bar} keepVotes={votes.keepVotes} skipVotes={votes.skipVotes} />
+            {/* 1. Header: bar logo */}
+            <VideoHeaderOverlay bar={bar} />
 
             {/* 2. Floating emoji reactions (absolute inset-0, overflow hidden) */}
             <ReactionsOverlay latestReaction={broadcast.latestReaction} />
@@ -509,7 +509,7 @@ function TVDisplay() {
               className="absolute z-20 flex flex-col gap-2"
               style={{
                 right: 'clamp(10px, 1.2vw, 20px)',
-                top: 'clamp(60px, 8vh, 90px)',
+                top: 'clamp(10px, 1.2vh, 20px)',
                 bottom: 'clamp(10px, 1.2vh, 20px)',
                 width: 'clamp(220px, 20vw, 360px)',
               }}
@@ -543,6 +543,8 @@ function TVDisplay() {
         queue={queue.queue}
         pinnedMessage={pinnedMessage}
         isPlaying={isPlaying}
+        keepVotes={votes.keepVotes}
+        skipVotes={votes.skipVotes}
         onReset={handleReset}
       />
 

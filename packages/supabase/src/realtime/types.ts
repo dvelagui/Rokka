@@ -86,6 +86,29 @@ export interface AdRow {
   is_active: boolean
   sort_order: number
   image_url: string | null
+  start_date: string | null
+  end_date: string | null
+  time_start: string | null
+  time_end: string | null
+  max_impressions: number | null
+  impressions_count: number
+}
+
+export interface AdImpressionReportRow {
+  ad_id: string
+  title: string
+  emoji: string
+  is_active: boolean
+  total_count: number
+  last_shown: string | null
+}
+
+export interface AdImpressionRow {
+  id: string
+  ad_id: string
+  bar_id: string
+  source: string
+  shown_at: string
 }
 
 // ── Broadcast payloads ────────────────────────────────────────────────────────

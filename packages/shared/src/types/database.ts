@@ -104,18 +104,32 @@ export interface OrdersRow {
 }
 
 export interface AdsRow {
-  id:               string
-  bar_id:           string
-  emoji:            string
-  title:            string
-  subtitle:         string | null
-  color:            string
-  duration_seconds: number
-  is_own:           boolean
-  company_name:     string | null
-  is_active:        boolean
-  sort_order:       number
-  image_url:        string | null
+  id:                string
+  bar_id:            string
+  emoji:             string
+  title:             string
+  subtitle:          string | null
+  color:             string
+  duration_seconds:  number
+  is_own:            boolean
+  company_name:      string | null
+  is_active:         boolean
+  sort_order:        number
+  image_url:         string | null
+  start_date:        string | null
+  end_date:          string | null
+  time_start:        string | null
+  time_end:          string | null
+  max_impressions:   number | null
+  impressions_count: number
+}
+
+export interface AdImpressionsRow {
+  id:       string
+  ad_id:    string
+  bar_id:   string
+  source:   string
+  shown_at: string
 }
 
 export interface WaitersRow {
@@ -231,6 +245,7 @@ export interface Database {
       credits_transactions:  { Row: CreditsTransactionsRow;   Insert: Partial<CreditsTransactionsRow> & Pick<CreditsTransactionsRow, 'bar_id' | 'table_id' | 'amount' | 'type'>; Update: Partial<CreditsTransactionsRow> }
       orders:                { Row: OrdersRow;                Insert: Partial<OrdersRow> & Pick<OrdersRow, 'bar_id' | 'table_id' | 'items' | 'total'>; Update: Partial<OrdersRow> }
       ads:                   { Row: AdsRow;                   Insert: Partial<AdsRow> & Pick<AdsRow, 'bar_id' | 'title'>;           Update: Partial<AdsRow> }
+      ad_impressions:        { Row: AdImpressionsRow;         Insert: Partial<AdImpressionsRow> & Pick<AdImpressionsRow, 'ad_id' | 'bar_id' | 'source'>; Update: never }
       waiters:               { Row: WaitersRow;               Insert: Partial<WaitersRow> & Pick<WaitersRow, 'bar_id' | 'name' | 'pin'>; Update: Partial<WaitersRow> }
       menu_categories:       { Row: MenuCategoriesRow;        Insert: Partial<MenuCategoriesRow> & Pick<MenuCategoriesRow, 'bar_id' | 'name'>; Update: Partial<MenuCategoriesRow> }
       menu_subcategories:    { Row: MenuSubcategoriesRow;     Insert: Partial<MenuSubcategoriesRow> & Pick<MenuSubcategoriesRow, 'category_id' | 'name'>; Update: Partial<MenuSubcategoriesRow> }

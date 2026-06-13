@@ -13,6 +13,8 @@ interface Props {
   queue: QueueItemWithVotes[]
   pinnedMessage: ChatMessage | null
   isPlaying: boolean
+  keepVotes: number
+  skipVotes: number
   onReset: () => void
 }
 
@@ -24,9 +26,20 @@ function formatTime(s: number): string {
 
 // ── BottomBar ─────────────────────────────────────────────────────────────────
 
-export function BottomBar({ currentSong, queue, pinnedMessage, isPlaying, onReset }: Props) {
+export function BottomBar({
+  currentSong,
+  queue,
+  pinnedMessage,
+  isPlaying,
+  keepVotes,
+  skipVotes,
+  onReset,
+}: Props) {
   const upcomingQueue = queue.filter((q) => q.status === 'queued')
   const topHasBid = (upcomingQueue[0]?.bid_amount ?? 0) > 0
+  const totalVotes = keepVotes + skipVotes || 1
+  const keepPct = (keepVotes / totalVotes) * 100
+  const skipPct = (skipVotes / totalVotes) * 100
 
   // ── Progress tracking ────────────────────────────────────────────────────────
   const [elapsed, setElapsed] = useState(0)
@@ -65,20 +78,23 @@ export function BottomBar({ currentSong, queue, pinnedMessage, isPlaying, onRese
         transition: 'border-color 0.5s ease',
       }}
     >
-      {/* ── Pinned admin message ─────────────────────────────────────────────── */}
-      <AnimatePresence>
-        {pinnedMessage && (
-          <motion.div
-            key="pinned"
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            className="overflow-hidden"
-            style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}
-          >
-            <div
-              className="flex items-center gap-2"
-              style={{ padding: 'clamp(4px, 0.5vh, 7px) clamp(12px, 1.5vw, 20px)' }}
+      {/* ── Pinned admin message + live voting ───────────────────────────────── */}
+      <div
+        className="flex items-center gap-3"
+        style={{
+          padding: 'clamp(4px, 0.5vh, 7px) clamp(12px, 1.5vw, 20px)',
+          borderBottom: '1px solid rgba(255,255,255,0.06)',
+        }}
+      >
+        <AnimatePresence>
+          {pinnedMessage && (
+            <motion.div
+              key="pinned"
+              initial={{ opacity: 0, width: 0 }}
+              animate={{ opacity: 1, width: 'auto' }}
+              exit={{ opacity: 0, width: 0 }}
+              className="flex items-center gap-2 overflow-hidden"
+              style={{ flex: 1, minWidth: 0 }}
             >
               <span style={{ fontSize: 'clamp(10px, 1.1vw, 14px)', flexShrink: 0 }}>📌</span>
               <p
@@ -95,10 +111,65 @@ export function BottomBar({ currentSong, queue, pinnedMessage, isPlaying, onRese
               >
                 {pinnedMessage.message}
               </p>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Live voting */}
+        <div
+          className="flex items-center gap-2 shrink-0"
+          style={{ marginLeft: pinnedMessage ? 0 : 'auto' }}
+        >
+          <span
+            style={{
+              fontSize: '8px',
+              color: 'rgba(255,255,255,0.4)',
+              textTransform: 'uppercase' as const,
+              letterSpacing: '2px',
+              fontWeight: 700,
+            }}
+          >
+            Votación
+          </span>
+          <div
+            style={{
+              width: 'clamp(50px, 6vw, 90px)',
+              height: 'clamp(4px, 0.5vh, 7px)',
+              borderRadius: '999px',
+              overflow: 'hidden',
+              display: 'flex',
+              background: 'rgba(255,255,255,0.08)',
+            }}
+          >
+            <div
+              style={{
+                width: `${keepPct}%`,
+                background: '#00e5ff',
+                transition: 'width 0.6s cubic-bezier(0.4,0,0.2,1)',
+              }}
+            />
+            <div
+              style={{
+                width: `${skipPct}%`,
+                background: '#d500f9',
+                transition: 'width 0.6s cubic-bezier(0.4,0,0.2,1)',
+              }}
+            />
+          </div>
+          <div
+            style={{
+              display: 'flex',
+              gap: 'clamp(6px, 0.8vw, 12px)',
+              fontSize: 'clamp(9px, 1.1vw, 14px)',
+              fontWeight: 700,
+              fontVariantNumeric: 'tabular-nums',
+            }}
+          >
+            <span style={{ color: '#00e5ff' }}>👍 {keepVotes}</span>
+            <span style={{ color: '#d500f9' }}>⏭ {skipVotes}</span>
+          </div>
+        </div>
+      </div>
 
       {/* ── Current song + progress bar ──────────────────────────────────────── */}
       {currentSong ? (

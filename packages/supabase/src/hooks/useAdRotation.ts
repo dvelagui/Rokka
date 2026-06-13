@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback, useRef } from 'react'
 import { getSupabaseBrowserClient } from '../client'
-import { getAds } from '../queries/ads'
+import { getAds, recordAdImpression } from '../queries/ads'
 import type { AdRow } from '../realtime/types'
 
 /** Song-mode: show an ad every N songs played */
@@ -39,6 +39,8 @@ export interface UseAdRotationOptions {
   initialDelaySec?: number
   /** Seconds between ads in time mode (starts counting after previous ad ends). Default: 30. */
   intervalSec?: number
+  /** App showing the ad — recorded with each impression for reporting. */
+  source: 'tv' | 'client'
 }
 
 export interface UseAdRotationReturn {
@@ -54,11 +56,12 @@ export interface UseAdRotationReturn {
 
 export function useAdRotation(
   barId: string | null,
-  opts?: UseAdRotationOptions,
+  opts: UseAdRotationOptions,
 ): UseAdRotationReturn {
-  const mode = opts?.mode ?? 'song'
-  const initialDelayMs = (opts?.initialDelaySec ?? 5) * 1_000
-  const intervalMs = (opts?.intervalSec ?? 30) * 1_000
+  const mode = opts.mode ?? 'song'
+  const initialDelayMs = (opts.initialDelaySec ?? 5) * 1_000
+  const intervalMs = (opts.intervalSec ?? 30) * 1_000
+  const source = opts.source
 
   const [ads, setAds] = useState<AdRow[]>([])
   const [currentAd, setCurrentAd] = useState<AdRow | null>(null)
@@ -121,6 +124,7 @@ export function useAdRotation(
     setCurrentAd(ad)
     setIsShowingAd(true)
     setCountdown(ad.duration_seconds)
+    recordAdImpression(ad.id, source).catch(() => {})
 
     let remaining = ad.duration_seconds
     countdownTimer.current = setInterval(() => {
@@ -134,7 +138,7 @@ export function useAdRotation(
         setCountdown(0)
       }
     }, 1_000)
-  }, [])
+  }, [source])
 
   // ── Dismiss manually ──────────────────────────────────────────────────────────
 
@@ -234,9 +238,17 @@ export function useAdRotation(
 
     return () => {
       void supabase.removeChannel(channel)
-      if (countdownTimer.current) clearInterval(countdownTimer.current)
     }
   }, [barId, mode, isShowingAd, showNextAd])
+
+  // ── Cleanup timers on unmount ──────────────────────────────────────────────────
+
+  useEffect(() => {
+    return () => {
+      if (countdownTimer.current) clearInterval(countdownTimer.current)
+      if (scheduleRef.current) clearTimeout(scheduleRef.current)
+    }
+  }, [])
 
   return { currentAd, isShowingAd, countdown, dismissAd, triggerAd: showNextAd }
 }

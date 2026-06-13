@@ -1,26 +1,57 @@
 import { getSupabaseBrowserClient } from '../client'
-import type { AdRow } from '../realtime/types'
+import type { AdRow, AdImpressionReportRow, AdImpressionRow } from '../realtime/types'
 
 // ── Queries ───────────────────────────────────────────────────────────────────
 
 /**
  * Anuncios del bar ordenados por sort_order.
- * `activeOnly = true` → solo activos (para TV/cliente).
+ * `activeOnly = true` → solo activos y dentro de su programación (fecha/horario),
+ *   vía RPC `get_active_ads` (también desactiva los que vencieron).
  * `activeOnly = false` → todos (para admin).
  */
 export async function getAds(barId: string, activeOnly = true): Promise<AdRow[]> {
   const supabase = getSupabaseBrowserClient()
-  let query = supabase
+
+  if (activeOnly) {
+    const { data, error } = await supabase.rpc('get_active_ads', { p_bar_id: barId })
+    if (error) throw new Error(error.message)
+    return (data ?? []) as AdRow[]
+  }
+
+  const { data, error } = await supabase
     .from('ads')
     .select('*')
     .eq('bar_id', barId)
     .order('sort_order', { ascending: true })
 
-  if (activeOnly) query = query.eq('is_active', true)
-
-  const { data, error } = await query
   if (error) throw new Error(error.message)
   return (data ?? []) as AdRow[]
+}
+
+/** Registra una visualización del anuncio (incrementa contador, puede desactivarlo si llega al límite). */
+export async function recordAdImpression(adId: string, source: 'tv' | 'client'): Promise<void> {
+  const supabase = getSupabaseBrowserClient()
+  const { error } = await supabase.rpc('record_ad_impression', { p_ad_id: adId, p_source: source })
+  if (error) throw new Error(error.message)
+}
+
+/** Informe de impresiones por anuncio: total mostrado y última vez. */
+export async function getAdImpressionsReport(barId: string): Promise<AdImpressionReportRow[]> {
+  const supabase = getSupabaseBrowserClient()
+  const { data, error } = await supabase.rpc('get_ad_impressions_report', { p_bar_id: barId })
+  if (error) throw new Error(error.message)
+  return (data ?? []) as AdImpressionReportRow[]
+}
+
+/** Historial de impresiones de un anuncio (más recientes primero). */
+export async function getAdImpressionsHistory(adId: string, limit = 50): Promise<AdImpressionRow[]> {
+  const supabase = getSupabaseBrowserClient()
+  const { data, error } = await supabase.rpc('get_ad_impressions_history', {
+    p_ad_id: adId,
+    p_limit: limit,
+  })
+  if (error) throw new Error(error.message)
+  return (data ?? []) as AdImpressionRow[]
 }
 
 export async function createAd(
@@ -35,6 +66,11 @@ export async function createAd(
     companyName?: string
     isActive?: boolean
     imageUrl?: string
+    startDate?: string | null
+    endDate?: string | null
+    timeStart?: string | null
+    timeEnd?: string | null
+    maxImpressions?: number | null
   },
 ): Promise<AdRow> {
   const supabase = getSupabaseBrowserClient()
@@ -51,6 +87,11 @@ export async function createAd(
       company_name:     data.companyName ?? null,
       is_active:        data.isActive ?? true,
       image_url:        data.imageUrl ?? null,
+      start_date:       data.startDate ?? null,
+      end_date:         data.endDate ?? null,
+      time_start:       data.timeStart ?? null,
+      time_end:         data.timeEnd ?? null,
+      max_impressions:  data.maxImpressions ?? null,
     })
     .select()
     .single()
@@ -70,6 +111,11 @@ export async function updateAd(
     company_name: string
     is_active: boolean
     image_url: string | null
+    start_date: string | null
+    end_date: string | null
+    time_start: string | null
+    time_end: string | null
+    max_impressions: number | null
   }>,
 ): Promise<void> {
   const supabase = getSupabaseBrowserClient()

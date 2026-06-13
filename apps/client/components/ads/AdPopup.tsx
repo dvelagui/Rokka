@@ -11,7 +11,7 @@ const INTERVAL_MS       = 90_000   // luego cada 90s
 export function AdPopup() {
   const { bar }                                            = useTableContext()
   const { currentAd, isShowingAd, countdown, dismissAd, triggerAd } =
-    useAdRotation(bar?.id ?? null)
+    useAdRotation(bar?.id ?? null, { source: 'client' })
 
   const initialFired = useRef(false)
   const intervalRef  = useRef<ReturnType<typeof setInterval> | null>(null)

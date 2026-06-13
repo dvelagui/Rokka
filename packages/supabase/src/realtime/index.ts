@@ -9,6 +9,8 @@ export type {
   TableEvent,
   OrderRow,
   AdRow,
+  AdImpressionReportRow,
+  AdImpressionRow,
   ReactionPayload,
   TableCallPayload,
   AdminActionType,

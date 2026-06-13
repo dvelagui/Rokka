@@ -26,6 +26,7 @@ export function AdBanner({ barId }: Props) {
     mode: 'time',
     initialDelaySec: 5,
     intervalSec: 30,
+    source: 'tv',
   })
 
   return (

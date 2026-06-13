@@ -51,7 +51,10 @@ function QueueCard({ item, position }: { item: QueueItemWithVotes; position: num
         padding: 'clamp(5px, 0.7vh, 9px) clamp(8px, 1vw, 12px)',
         display: 'flex',
         flexDirection: 'column' as const,
+        justifyContent: 'center' as const,
         gap: 'clamp(1px, 0.2vh, 3px)',
+        height: 'clamp(48px, 7.5vh, 78px)',
+        flexShrink: 0,
         minWidth: 0,
         overflow: 'hidden',
       }}

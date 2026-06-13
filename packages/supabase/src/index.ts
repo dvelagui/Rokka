@@ -116,7 +116,17 @@ export type { ActivityLogEntry } from './queries/log'
 export { makeNotification, HIGH_BID_THRESHOLD } from './queries/notifications'
 export type { AdminNotification, NotificationKind } from './queries/notifications'
 
-export { getAds, createAd, updateAd, deleteAd, toggleAdActive, reorderAds } from './queries/ads'
+export {
+  getAds,
+  createAd,
+  updateAd,
+  deleteAd,
+  toggleAdActive,
+  reorderAds,
+  recordAdImpression,
+  getAdImpressionsReport,
+  getAdImpressionsHistory,
+} from './queries/ads'
 
 export { getFavorites, addFavorite, removeFavorite, toggleFavorite } from './queries/favorites'
 export type { FavoriteSong } from './queries/favorites'
@@ -219,6 +229,8 @@ export type {
   TableEvent,
   OrderRow,
   AdRow,
+  AdImpressionReportRow,
+  AdImpressionRow,
   ReactionPayload,
   TableCallPayload,
   AdminActionType,

@@ -5,8 +5,6 @@ import type { BarPublic } from '../providers/TVProvider'
 
 interface Props {
   bar: BarPublic | null
-  keepVotes: number
-  skipVotes: number
 }
 
 // ── Burn-in prevention ────────────────────────────────────────────────────────
@@ -31,10 +29,7 @@ function useBurnInShift() {
 
 // ─────────────────────────────────────────────────────────────────────────────
 
-export function VideoHeaderOverlay({ bar, keepVotes, skipVotes }: Props) {
-  const total = keepVotes + skipVotes || 1
-  const keepPct = (keepVotes / total) * 100
-  const skipPct = (skipVotes / total) * 100
+export function VideoHeaderOverlay({ bar }: Props) {
   const burnIn = useBurnInShift()
 
   return (
@@ -75,75 +70,6 @@ export function VideoHeaderOverlay({ bar, keepVotes, skipVotes }: Props) {
             {bar?.emoji ?? '🎵'}
           </div>
         )}
-      </div>
-
-      {/* ── Center: live voting card — hidden on narrow viewports ────────── */}
-      <div
-        className="tv-vote-card"
-        style={{
-          background: 'rgba(0,0,0,0.55)',
-          backdropFilter: 'blur(16px)',
-          WebkitBackdropFilter: 'blur(16px)',
-          border: '1px solid rgba(255,255,255,0.1)',
-          borderRadius: 'clamp(8px, 1vw, 14px)',
-          padding: 'clamp(6px, 0.8vh, 10px) clamp(12px, 1.5vw, 20px)',
-          display: 'flex',
-          flexDirection: 'column' as const,
-          alignItems: 'center',
-          gap: 'clamp(3px, 0.4vh, 6px)',
-          minWidth: 'clamp(130px, 16vw, 230px)',
-        }}
-      >
-        <span
-          style={{
-            fontSize: '8px',
-            color: 'rgba(255,255,255,0.4)',
-            textTransform: 'uppercase' as const,
-            letterSpacing: '2px',
-            fontWeight: 700,
-          }}
-        >
-          Votación
-        </span>
-
-        <div
-          style={{
-            width: '100%',
-            height: 'clamp(4px, 0.55vh, 7px)',
-            borderRadius: '999px',
-            overflow: 'hidden',
-            display: 'flex',
-            background: 'rgba(255,255,255,0.08)',
-          }}
-        >
-          <div
-            style={{
-              width: `${keepPct}%`,
-              background: '#00e5ff',
-              transition: 'width 0.6s cubic-bezier(0.4,0,0.2,1)',
-            }}
-          />
-          <div
-            style={{
-              width: `${skipPct}%`,
-              background: '#d500f9',
-              transition: 'width 0.6s cubic-bezier(0.4,0,0.2,1)',
-            }}
-          />
-        </div>
-
-        <div
-          style={{
-            display: 'flex',
-            gap: 'clamp(8px, 1.1vw, 16px)',
-            fontSize: 'clamp(9px, 1.1vw, 14px)',
-            fontWeight: 700,
-            fontVariantNumeric: 'tabular-nums',
-          }}
-        >
-          <span style={{ color: '#00e5ff' }}>👍 {keepVotes}</span>
-          <span style={{ color: '#d500f9' }}>⏭ {skipVotes}</span>
-        </div>
       </div>
     </div>
   )

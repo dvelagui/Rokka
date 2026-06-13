@@ -38,6 +38,13 @@ export default function AdFormModal({ ad, barId, onSave, onClose }: Props) {
   const [company,  setCompany]  = useState(ad?.company_name ?? '')
   const [isActive, setIsActive] = useState(ad?.is_active ?? true)
   const [imageUrl, setImageUrl] = useState<string | null>(ad?.image_url ?? null)
+  const [startDate, setStartDate] = useState(ad?.start_date ?? '')
+  const [endDate,   setEndDate]   = useState(ad?.end_date ?? '')
+  const [timeStart, setTimeStart] = useState(ad?.time_start?.slice(0, 5) ?? '')
+  const [timeEnd,   setTimeEnd]   = useState(ad?.time_end?.slice(0, 5) ?? '')
+  const [maxImpressions, setMaxImpressions] = useState(
+    ad?.max_impressions != null ? String(ad.max_impressions) : '',
+  )
   const [uploadingImage, setUploadingImage] = useState(false)
   const [saving,   setSaving]   = useState(false)
   const [error,    setError]    = useState('')
@@ -86,6 +93,12 @@ export default function AdFormModal({ ad, barId, onSave, onClose }: Props) {
     e.preventDefault()
     if (!title.trim()) { setError('El título es requerido'); return }
 
+    const startDateVal = startDate || null
+    const endDateVal   = endDate || null
+    const timeStartVal = timeStart || null
+    const timeEndVal   = timeEnd || null
+    const maxImpressionsVal = maxImpressions.trim() ? Number(maxImpressions) : null
+
     setSaving(true)
     setError('')
     try {
@@ -100,6 +113,11 @@ export default function AdFormModal({ ad, barId, onSave, onClose }: Props) {
           company_name:     !isOwn ? (company.trim() || undefined) : undefined,
           is_active:        isActive,
           image_url:        imageUrl,
+          start_date:       startDateVal,
+          end_date:         endDateVal,
+          time_start:       timeStartVal,
+          time_end:         timeEndVal,
+          max_impressions:  maxImpressionsVal,
         })
         const updated: AdRow = {
           ...ad,
@@ -112,6 +130,11 @@ export default function AdFormModal({ ad, barId, onSave, onClose }: Props) {
           company_name: !isOwn ? (company.trim() || null) : null,
           is_active:    isActive,
           image_url:    imageUrl,
+          start_date:   startDateVal,
+          end_date:     endDateVal,
+          time_start:   timeStartVal,
+          time_end:     timeEndVal,
+          max_impressions: maxImpressionsVal,
         }
         await addLogEntry(barId, admin?.email ?? 'admin', 'ad_updated', `Editó anuncio: ${title.trim()}`)
         onSave(updated)
@@ -126,6 +149,11 @@ export default function AdFormModal({ ad, barId, onSave, onClose }: Props) {
           companyName:     !isOwn ? (company.trim() || undefined) : undefined,
           isActive,
           imageUrl:        imageUrl ?? undefined,
+          startDate:       startDateVal,
+          endDate:         endDateVal,
+          timeStart:       timeStartVal,
+          timeEnd:         timeEndVal,
+          maxImpressions:  maxImpressionsVal,
         })
         await addLogEntry(barId, admin?.email ?? 'admin', 'ad_created', `Creó anuncio: ${title.trim()}`)
         onSave(created)
@@ -339,6 +367,68 @@ export default function AdFormModal({ ad, barId, onSave, onClose }: Props) {
                 />
               </div>
             )}
+
+            {/* Programación: rango de fechas */}
+            <div className="space-y-1.5">
+              <label className={labelCls}>Rango de fechas</label>
+              <p className="text-[10px] text-white/30">
+                Deja en blanco para que no tenga fecha de inicio/fin.
+              </p>
+              <div className="flex gap-2">
+                <input
+                  type="date"
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                  className={inputCls}
+                />
+                <input
+                  type="date"
+                  value={endDate}
+                  onChange={(e) => setEndDate(e.target.value)}
+                  className={inputCls}
+                />
+              </div>
+            </div>
+
+            {/* Programación: rango horario */}
+            <div className="space-y-1.5">
+              <label className={labelCls}>Rango horario</label>
+              <p className="text-[10px] text-white/30">
+                Solo se mostrará entre estas horas cada día. Deja en blanco para todo el día.
+              </p>
+              <div className="flex gap-2">
+                <input
+                  type="time"
+                  value={timeStart}
+                  onChange={(e) => setTimeStart(e.target.value)}
+                  className={inputCls}
+                />
+                <input
+                  type="time"
+                  value={timeEnd}
+                  onChange={(e) => setTimeEnd(e.target.value)}
+                  className={inputCls}
+                />
+              </div>
+            </div>
+
+            {/* Límite de impresiones */}
+            <div className="space-y-1">
+              <label className={labelCls}>Límite de veces a mostrar</label>
+              <input
+                type="number"
+                min={1}
+                value={maxImpressions}
+                onChange={(e) => setMaxImpressions(e.target.value)}
+                placeholder="Sin límite"
+                className={inputCls}
+              />
+              {isEdit && (
+                <p className="text-[10px] text-white/30">
+                  Mostrado {ad.impressions_count} {ad.impressions_count === 1 ? 'vez' : 'veces'} hasta ahora.
+                </p>
+              )}
+            </div>
 
             {/* Active toggle */}
             <SettingRow
