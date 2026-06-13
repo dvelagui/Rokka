@@ -3,11 +3,10 @@
 import { motion } from 'framer-motion'
 import { useRealtime } from '@rokka/supabase'
 
-export type Tab = 'queue' | 'genre' | 'top' | 'chat' | 'search'
+export type Tab = 'queue' | 'top' | 'chat' | 'search'
 
 const TABS: { id: Tab; emoji: string; label: string }[] = [
   { id: 'queue',  emoji: '🎵', label: 'Cola'   },
-  { id: 'genre',  emoji: '🎸', label: 'Géneros' },
   { id: 'top',    emoji: '⭐', label: 'Top Bar' },
   { id: 'chat',   emoji: '💬', label: 'Chat'   },
   { id: 'search', emoji: '🔍', label: 'Buscar' },

@@ -8,11 +8,16 @@ import { NowPlaying }             from '@/components/queue/NowPlaying'
 import { VotingSection }          from '@/components/queue/VotingSection'
 import { QueueList }              from '@/components/queue/QueueList'
 import { BidModal }               from '@/components/modals/BidModal'
+import { SearchCTA }              from '@/components/SearchCTA'
 import { useTableContext }         from '@/providers/TableProvider'
 
 // ── QueueTab ──────────────────────────────────────────────────────────────────
 
-export function QueueTab() {
+interface QueueTabProps {
+  onSearch?: () => void
+}
+
+export function QueueTab({ onSearch }: QueueTabProps) {
   const [bidSong, setBidSong] = useState<QueueItemWithVotes | null>(null)
   const { queue }             = useRealtime()
   const { table }             = useTableContext()
@@ -22,6 +27,9 @@ export function QueueTab() {
   return (
     <>
       <div className="pb-4">
+        {/* Search CTA */}
+        {onSearch && <SearchCTA onClick={onSearch} />}
+
         {/* Now Playing */}
         <NowPlaying />
 

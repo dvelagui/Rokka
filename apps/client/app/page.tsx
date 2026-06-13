@@ -10,7 +10,6 @@ import { TabBar, type Tab }      from '@/components/TabBar'
 import { QueueTab }              from '@/components/tabs/QueueTab'
 import { ChatTab }               from '@/components/tabs/ChatTab'
 import { SearchTab }             from '@/components/tabs/SearchTab'
-import { GenresTab }             from '@/components/tabs/GenresTab'
 import { TopBarTab }             from '@/components/tabs/TopBarTab'
 import { FloatingReactions }     from '@/components/FloatingReactions'
 import { MenuSheet }             from '@/components/menu/MenuSheet'
@@ -21,9 +20,12 @@ import { BannedBanner }          from '@/components/BannedBanner'
 // Chat tab fills the entire content area (handles its own inner scroll)
 const FILLS_SPACE: Partial<Record<Tab, true>> = { chat: true }
 
-const TAB_CONTENT: Record<Tab, React.ComponentType> = {
+interface TabProps {
+  onSearch?: () => void
+}
+
+const TAB_CONTENT: Record<Tab, React.ComponentType<TabProps>> = {
   queue:  QueueTab,
-  genre:  GenresTab,
   top:    TopBarTab,
   chat:   ChatTab,
   search: SearchTab,
@@ -33,7 +35,7 @@ const TAB_CONTENT: Record<Tab, React.ComponentType> = {
 
 export default function HomePage() {
   const { isLoading, isBanned } = useTableContext()
-  const [activeTab, setActiveTab]   = useState<Tab>('queue')
+  const [activeTab, setActiveTab]   = useState<Tab>('search')
   const [menuOpen, setMenuOpen]     = useState(false)
   const [scannerOpen, setScannerOpen] = useState(false)
 
@@ -72,7 +74,7 @@ export default function HomePage() {
             transition={{ duration: 0.15, ease: 'easeOut' }}
             className={fillsSpace ? 'flex-1 flex flex-col min-h-0 overflow-hidden' : undefined}
           >
-            <ActiveSection />
+            <ActiveSection onSearch={() => setActiveTab('search')} />
           </motion.div>
         </AnimatePresence>
       </main>

@@ -1,7 +1,7 @@
 'use client'
 
 import { Suspense, useEffect, useState } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useSearchParams } from 'next/navigation'
 import { checkTableByToken, storeTableSession } from '@rokka/supabase'
 
 // ── Next.js 15 requiere Suspense alrededor de useSearchParams ─────────────────
@@ -19,7 +19,6 @@ export default function JoinPage() {
 type Status = 'validating' | 'success' | 'error_invalid' | 'error_banned' | 'error_no_token'
 
 function JoinContent() {
-  const router = useRouter()
   const searchParams = useSearchParams()
   const [status, setStatus] = useState<Status>('validating')
   const [label, setLabel] = useState<string>('')
@@ -41,10 +40,13 @@ function JoinContent() {
         setLabel(result.data.label)
         setStatus('success')
 
-        setTimeout(() => router.replace('/'), 1200)
+        // Navegación dura (no router.replace): TableProvider ya resolvió su
+        // sesión en el primer render, así que necesitamos recargar para que
+        // useTable lea el token recién guardado en localStorage.
+        setTimeout(() => { window.location.href = '/' }, 1200)
       })
       .catch(() => setStatus('error_invalid'))
-  }, [searchParams, router])
+  }, [searchParams])
 
   return (
     <main className="min-h-screen flex items-center justify-center bg-background px-4">
