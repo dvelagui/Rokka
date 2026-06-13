@@ -18,10 +18,16 @@ export function SearchTab() {
 
   return (
     <>
-      <div className="flex flex-col gap-3 px-3 pt-3 pb-6">
+      <div className="flex flex-col gap-3 px-3 pt-4 pb-6">
+        {/* Heading */}
+        <div className="px-1">
+          <h1 className="text-white font-black text-xl leading-tight">¿Qué quieres escuchar?</h1>
+          <p className="text-white/40 text-xs mt-0.5">Busca tu canción y pídela en la cola</p>
+        </div>
+
         {/* Search input */}
         <div className="relative">
-          <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-white/30 text-base pointer-events-none">
+          <span className="absolute left-4 top-1/2 -translate-y-1/2 text-rokka-cyan text-lg pointer-events-none">
             🔍
           </span>
           <input
@@ -29,13 +35,15 @@ export function SearchTab() {
             value={query}
             onChange={(e) => handleChange(e.target.value)}
             placeholder="Buscar en YouTube..."
-            className="w-full bg-card border border-border rounded-full pl-10 pr-10 py-2.5
-                       text-sm text-white placeholder-white/25 outline-none
-                       focus:border-rokka-cyan/40 transition-colors"
+            autoFocus
+            className="w-full bg-rokka-cyan/10 border-2 border-rokka-cyan/40 rounded-2xl pl-12 pr-12 py-4
+                       text-base text-white placeholder-white/30 outline-none
+                       shadow-[0_0_24px_rgba(0,229,255,0.18)]
+                       focus:border-rokka-cyan/70 transition-colors"
           />
           {yt.isSearching && (
-            <span className="absolute right-3.5 top-1/2 -translate-y-1/2">
-              <span className="w-4 h-4 rounded-full border-2 border-rokka-cyan/40 border-t-rokka-cyan animate-spin block" />
+            <span className="absolute right-4 top-1/2 -translate-y-1/2">
+              <span className="w-5 h-5 rounded-full border-2 border-rokka-cyan/40 border-t-rokka-cyan animate-spin block" />
             </span>
           )}
         </div>
