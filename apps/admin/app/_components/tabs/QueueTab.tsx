@@ -309,7 +309,12 @@ export default function QueueTab() {
       )}
 
       {!currentSong && locked.length === 0 && freeItems.length === 0 && (
-        <div className="text-center py-16 text-white/20 text-sm">Cola vacía</div>
+        <div className="text-center py-16 text-white/20 text-sm space-y-1">
+          <p>Cola vacía</p>
+          <p className="text-white/15 text-xs">
+            Sonará una canción favorita automáticamente al avanzar
+          </p>
+        </div>
       )}
 
       <GenreAssignModal
