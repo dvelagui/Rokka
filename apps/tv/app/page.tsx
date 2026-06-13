@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { useRouter } from 'next/navigation'
 import { clearTVSession, playNextSong, skipSong, sendAdminMessage } from '@rokka/supabase'
@@ -89,7 +89,13 @@ function bubbleClass(seed: string): string {
   return BUBBLE_CLASSES[Math.abs(hash) % BUBBLE_CLASSES.length]
 }
 
-function ChatPanel({ messages }: { messages: ChatMessage[] }) {
+function ChatPanel({
+  messages,
+  tableLabels,
+}: {
+  messages: ChatMessage[]
+  tableLabels: Map<string, string>
+}) {
   const visible = messages.slice(-20)
   const bottomRef = useRef<HTMLDivElement | null>(null)
 
@@ -125,7 +131,10 @@ function ChatPanel({ messages }: { messages: ChatMessage[] }) {
                       className="text-[10px] font-bold uppercase tracking-wide leading-none mb-0.5 text-white/80"
                       style={{ textShadow: '0 1px 2px rgba(0,0,0,0.4)' }}
                     >
-                      {msg.message_type === 'admin' ? '🎛 DJ' : 'Mesa'} · {formatChatTime(msg.created_at)}
+                      {msg.message_type === 'admin'
+                        ? '🎛 DJ'
+                        : (msg.table_id && tableLabels.get(msg.table_id)) || 'Mesa'}{' '}
+                      · {formatChatTime(msg.created_at)}
                     </p>
                     <p
                       className="text-white text-sm font-semibold leading-snug break-words"
@@ -207,7 +216,7 @@ function StartOverlay({ onStart }: { onStart: () => void }) {
 function TVDisplay() {
   const router = useRouter()
   const { barId, barSlug, bar } = useTVContext()
-  const { queue, chat, votes, connectionStatus, broadcast } = useTVRealtime()
+  const { queue, chat, votes, tables, connectionStatus, broadcast } = useTVRealtime()
 
   const [started, setStarted] = useState(false)
   const [isPlaying, setIsPlaying] = useState(true)
@@ -245,6 +254,13 @@ function TVDisplay() {
 
   const upcomingQueue = queue.queue.filter((q) => q.status === 'queued')
   const topHasBid = (upcomingQueue[0]?.bid_amount ?? 0) > 0
+
+  // Mapa table_id → "Mesa N" para mostrar el nombre de mesa en el chat
+  const tableLabels = useMemo(() => {
+    const map = new Map<string, string>()
+    for (const t of tables?.tables ?? []) map.set(t.id, t.label)
+    return map
+  }, [tables?.tables])
 
   // Toggle playback when admin sends pause_music action
   useEffect(() => {
@@ -519,7 +535,7 @@ function TVDisplay() {
               }}
             >
               <div style={{ height: '40%' }} className="overflow-hidden">
-                <ChatPanel messages={allMessages} />
+                <ChatPanel messages={allMessages} tableLabels={tableLabels} />
               </div>
               <div style={{ height: '60%' }} className="overflow-hidden">
                 <QueueColumn queue={queue.queue} />

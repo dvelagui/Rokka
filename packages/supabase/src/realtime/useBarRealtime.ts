@@ -23,8 +23,9 @@ export interface BarRealtimeState {
   ads: ReturnType<typeof useAdsRealtime>
   broadcast: ReturnType<typeof useBroadcast>
 
-  /** Solo admin */
+  /** Admin y TV (para resolver el nombre de mesa en el chat) */
   tables: ReturnType<typeof useTablesRealtime> | null
+  /** Solo admin */
   orders: ReturnType<typeof useOrdersRealtime> | null
 }
 
@@ -42,14 +43,19 @@ export function useBarRealtime(
   const ads = useAdsRealtime(barId)
   const broadcast = useBroadcast(barId)
 
-  // Admin-only: always call but pass null when not admin (hooks handle null gracefully)
-  const tables = useTablesRealtime(role === 'admin' ? barId : null)
+  // Admin y TV necesitan `tables` (TV para mostrar el nombre de mesa en el chat);
+  // siempre se llama el hook pero se pasa null cuando no aplica (lo maneja bien)
+  const needsTables = role === 'admin' || role === 'tv'
+  const tables = useTablesRealtime(needsTables ? barId : null)
   const orders = useOrdersRealtime(role === 'admin' ? barId : null)
 
   // Consolidated connection status: degraded if any relevant channel is not connected
   const statuses: ConnectionStatus[] = [queue.status, chat.status, ads.status]
+  if (needsTables) {
+    statuses.push(tables.status)
+  }
   if (role === 'admin') {
-    statuses.push(tables.status, orders.status)
+    statuses.push(orders.status)
   }
 
   let connectionStatus: ConnectionStatus = 'connected'
@@ -82,7 +88,7 @@ export function useBarRealtime(
     votes,
     ads,
     broadcast,
-    tables: role === 'admin' ? tables : null,
+    tables: needsTables ? tables : null,
     orders: role === 'admin' ? orders : null,
   }
 }
