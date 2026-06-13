@@ -21,7 +21,6 @@ function QueueCard({ item, position }: { item: QueueItemWithVotes; position: num
   let bgColor = 'rgba(0,0,0,0.35)'
   let boxShadow = 'none'
   let cardAnimation = ''
-  let posColor = 'rgba(255,255,255,0.35)'
   let emojiAnimation = ''
 
   if (isFirst && hasBid) {
@@ -29,17 +28,14 @@ function QueueCard({ item, position }: { item: QueueItemWithVotes; position: num
     bgColor = 'rgba(255,69,0,0.22)'
     boxShadow = '0 0 18px rgba(255,69,0,0.24)'
     cardAnimation = 'itemfire 1.2s ease-in-out infinite alternate'
-    posColor = FIRE1
     emojiAnimation = 'bounce 0.6s ease-in-out infinite alternate'
   } else if (isSecond && hasBid) {
     borderColor = FIRE2
     bgColor = 'rgba(255,109,0,0.18)'
-    posColor = FIRE2
     emojiAnimation = 'bounce 0.6s ease-in-out infinite alternate'
   } else if (hasBid) {
     borderColor = PURPLE
     bgColor = 'rgba(213,0,249,0.16)'
-    posColor = PURPLE
   }
 
   return (
@@ -60,29 +56,21 @@ function QueueCard({ item, position }: { item: QueueItemWithVotes; position: num
         overflow: 'hidden',
       }}
     >
-      {/* Position number + fire emoji */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <span
-          style={{
-            fontSize: 'clamp(8px, 0.9vw, 12px)',
-            fontWeight: 800,
-            color: posColor,
-            fontVariantNumeric: 'tabular-nums',
-          }}
-        >
-          {position}
-        </span>
-        {isFirst && hasBid && (
-          <span style={{ fontSize: 'clamp(10px, 1.1vw, 15px)', animation: emojiAnimation, display: 'inline-block' }}>
-            🔥
-          </span>
-        )}
-        {isSecond && hasBid && (
-          <span style={{ fontSize: 'clamp(10px, 1.1vw, 15px)', animation: emojiAnimation, display: 'inline-block' }}>
-            🟠
-          </span>
-        )}
-      </div>
+      {/* Fire emoji */}
+      {((isFirst && hasBid) || (isSecond && hasBid)) && (
+        <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
+          {isFirst && hasBid && (
+            <span style={{ fontSize: 'clamp(10px, 1.1vw, 15px)', animation: emojiAnimation, display: 'inline-block' }}>
+              🔥
+            </span>
+          )}
+          {isSecond && hasBid && (
+            <span style={{ fontSize: 'clamp(10px, 1.1vw, 15px)', animation: emojiAnimation, display: 'inline-block' }}>
+              🟠
+            </span>
+          )}
+        </div>
+      )}
 
       {/* Title */}
       <p
@@ -98,20 +86,6 @@ function QueueCard({ item, position }: { item: QueueItemWithVotes; position: num
         }}
       >
         {item.title}
-      </p>
-
-      {/* Artist */}
-      <p
-        style={{
-          fontSize: 'clamp(9px, 0.95vw, 12px)',
-          color: 'rgba(255,255,255,0.55)',
-          overflow: 'hidden',
-          textOverflow: 'ellipsis',
-          whiteSpace: 'nowrap',
-          lineHeight: 1.2,
-        }}
-      >
-        {item.artist}
       </p>
 
       {/* Mesa + bid */}

@@ -145,22 +145,6 @@ export function VideoHeaderOverlay({ bar, keepVotes, skipVotes }: Props) {
           <span style={{ color: '#d500f9' }}>⏭ {skipVotes}</span>
         </div>
       </div>
-
-      {/* ── Right: ROKKA branding — burn-in protection applied ───────────── */}
-      <span
-        style={{
-          color: '#00e5ff',
-          fontWeight: 900,
-          fontSize: 'clamp(12px, 1.5vw, 19px)',
-          letterSpacing: '4px',
-          textShadow: '0 0 20px rgba(0,229,255,0.55), 0 2px 8px rgba(0,0,0,0.7)',
-          display: 'inline-block',
-          transform: burnIn,
-          transition: 'transform 2s ease-in-out',
-        }}
-      >
-        ROKKA
-      </span>
     </div>
   )
 }
