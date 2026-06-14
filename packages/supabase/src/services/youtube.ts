@@ -47,6 +47,25 @@ function parseDuration(iso: string): number {
           parseInt(m[3] ?? '0')
 }
 
+// ── Error helpers ─────────────────────────────────────────────────────────────
+
+interface YoutubeApiError {
+  code: number
+  errors?: { reason: string }[]
+}
+
+/** Convierte un error de la API de YouTube en un mensaje legible para el usuario. */
+function youtubeErrorMessage(error: YoutubeApiError): string {
+  const reason = error.errors?.[0]?.reason
+  if (reason === 'quotaExceeded') {
+    return 'Cuota de búsqueda de YouTube agotada por hoy. Inténtalo mañana o usa el modo manual.'
+  }
+  if (error.code === 429 || reason === 'rateLimitExceeded' || reason === 'userRateLimitExceeded') {
+    return 'Demasiadas búsquedas en YouTube en poco tiempo. Espera unos segundos e inténtalo de nuevo.'
+  }
+  return `Error de YouTube: ${error.code}`
+}
+
 // ── Clean YouTube auto-generated title ───────────────────────────────────────
 
 function cleanTitle(raw: string): string {
@@ -84,7 +103,7 @@ export async function searchSongs(
 
   const res = await fetch(url.toString())
   const json = await res.json() as {
-    error?: { code: number; errors?: { reason: string }[] }
+    error?: YoutubeApiError
     items?: {
       id: { videoId: string }
       snippet: {
@@ -96,12 +115,7 @@ export async function searchSongs(
   }
 
   if (json.error) {
-    const isQuotaError = json.error.errors?.some((e) => e.reason === 'quotaExceeded')
-    throw new Error(
-      isQuotaError
-        ? 'Cuota de búsqueda de YouTube agotada por hoy. Inténtalo mañana o usa el modo manual.'
-        : `Error de YouTube: ${json.error.code}`,
-    )
+    throw new Error(youtubeErrorMessage(json.error))
   }
 
   const results: YoutubeSongResult[] = (json.items ?? []).map((item) => ({
@@ -131,7 +145,7 @@ export async function getVideoDetails(videoId: string): Promise<YoutubeVideoDeta
 
   const res = await fetch(url.toString())
   const json = await res.json() as {
-    error?: { code: number }
+    error?: YoutubeApiError
     items?: {
       snippet: {
         title: string
@@ -142,7 +156,7 @@ export async function getVideoDetails(videoId: string): Promise<YoutubeVideoDeta
     }[]
   }
 
-  if (json.error) throw new Error(`Error de YouTube: ${json.error.code}`)
+  if (json.error) throw new Error(youtubeErrorMessage(json.error))
   if (!json.items?.length) throw new Error(`Video ${videoId} no encontrado`)
 
   const item = json.items[0]

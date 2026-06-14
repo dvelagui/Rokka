@@ -48,8 +48,16 @@ export function SearchTab() {
           )}
         </div>
 
+        {/* Search error (cuota agotada, rate limit, etc.) */}
+        {yt.error && (
+          <div className="flex flex-col items-center justify-center py-12 gap-2">
+            <span className="text-3xl opacity-20">⚠️</span>
+            <p className="text-rokka-red/70 text-sm text-center">{yt.error}</p>
+          </div>
+        )}
+
         {/* Empty state */}
-        {!query && !yt.isSearching && (
+        {!query && !yt.isSearching && !yt.error && (
           <div className="flex flex-col items-center justify-center py-16 gap-3">
             <span className="text-4xl opacity-20">🎵</span>
             <p className="text-white/25 text-sm">Escribe para buscar en YouTube</p>
@@ -57,7 +65,7 @@ export function SearchTab() {
         )}
 
         {/* No results */}
-        {query.length >= 3 && !yt.isSearching && yt.results.length === 0 && (
+        {query.length >= 3 && !yt.isSearching && !yt.error && yt.results.length === 0 && (
           <div className="flex flex-col items-center justify-center py-12 gap-2">
             <span className="text-3xl opacity-20">😶</span>
             <p className="text-white/25 text-sm">Sin resultados para &ldquo;{query}&rdquo;</p>
