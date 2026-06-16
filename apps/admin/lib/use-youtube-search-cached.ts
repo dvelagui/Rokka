@@ -1,12 +1,12 @@
 'use client'
 
 import { useState, useCallback, useRef } from 'react'
-import { searchSongs, type YoutubeSongResult } from '../services/youtube'
+import type { YoutubeSongResult } from '@rokka/supabase'
 
 const DEBOUNCE_MS = 1200
 const MIN_QUERY_LEN = 3
 
-export interface UseYouTubeSearchReturn {
+export interface UseYouTubeSearchCachedReturn {
   results: YoutubeSongResult[]
   isSearching: boolean
   error: string | null
@@ -14,7 +14,12 @@ export interface UseYouTubeSearchReturn {
   clear: () => void
 }
 
-export function useYouTubeSearch(maxResults = 10): UseYouTubeSearchReturn {
+/**
+ * Igual que `useYouTubeSearch` de @rokka/supabase, pero busca a través de
+ * /api/youtube-search (caché de Supabase de 24h) en vez de llamar a YouTube
+ * directamente desde el navegador.
+ */
+export function useYouTubeSearchCached(maxResults = 10): UseYouTubeSearchCachedReturn {
   const [results, setResults] = useState<YoutubeSongResult[]>([])
   const [isSearching, setIsSearching] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -22,7 +27,6 @@ export function useYouTubeSearch(maxResults = 10): UseYouTubeSearchReturn {
 
   const search = useCallback(
     (query: string) => {
-      // Clear previous timer
       if (timerRef.current) clearTimeout(timerRef.current)
 
       if (query.trim().length < MIN_QUERY_LEN) {
@@ -37,8 +41,11 @@ export function useYouTubeSearch(maxResults = 10): UseYouTubeSearchReturn {
 
       timerRef.current = setTimeout(async () => {
         try {
-          const data = await searchSongs(query.trim(), maxResults)
-          setResults(data)
+          const url = `/api/youtube-search?q=${encodeURIComponent(query.trim())}&max=${maxResults}`
+          const res = await fetch(url)
+          const json = (await res.json()) as { results?: YoutubeSongResult[]; error?: string }
+          if (json.error) throw new Error(json.error)
+          setResults(json.results ?? [])
         } catch (e) {
           setError((e as Error).message)
           setResults([])

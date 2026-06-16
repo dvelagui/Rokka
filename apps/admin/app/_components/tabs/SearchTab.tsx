@@ -3,7 +3,6 @@
 import { useState, useMemo, useEffect, useCallback } from 'react'
 import {
   useRealtime,
-  useYouTubeSearch,
   getFavorites,
   toggleFavorite,
   getGenreWithSongs,
@@ -13,6 +12,7 @@ import {
 import type { FavoriteSong, GenreWithSongs } from '@rokka/supabase'
 import type { GenreSongsRow } from '@rokka/shared'
 import { useAdminContext } from '../../../providers/AdminProvider'
+import { useYouTubeSearchCached } from '../../../lib/use-youtube-search-cached'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -198,7 +198,7 @@ function YouTubeSection({
   adding: Set<string>
   onAdd: (s: AddableSong) => void
 }) {
-  const { results, isSearching, error, search, clear } = useYouTubeSearch(12)
+  const { results, isSearching, error, search, clear } = useYouTubeSearchCached(12)
   const [query, setQuery] = useState('')
 
   function handleInput(v: string) {
