@@ -51,7 +51,7 @@ export {
 export type { QueueItemWithVotes, OrderItem } from './rpc'
 
 // ── Queries ───────────────────────────────────────────────────────────────────
-export { getMessages, sendMessage, sendAdminMessage, getPinnedMessage } from './queries/chat'
+export { getMessages, sendMessage, sendAdminMessage, getPinnedMessage, clearChat } from './queries/chat'
 export type { ChatMessageWithLabel, SendMessageResult } from './queries/chat'
 
 export { getVotes, castVote, getMyVote } from './queries/votes'

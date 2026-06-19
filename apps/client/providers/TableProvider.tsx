@@ -5,6 +5,7 @@ import {
   useContext,
   useEffect,
   useState,
+  useCallback,
   type ReactNode,
 } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
@@ -12,8 +13,11 @@ import {
   useTable,
   getSupabaseBrowserClient,
   getBarPublicInfo,
+  clearTableSession,
 } from '@rokka/supabase'
 import type { TableSessionData } from '@rokka/supabase'
+import { useInactivityTimeout } from '@/lib/use-inactivity-timeout'
+import { InactivityWarning } from '@/components/InactivityWarning'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -56,9 +60,10 @@ export function TableProvider({ children }: { children: ReactNode }) {
   const pathname = usePathname()
   const { session, loading, error } = useTable()
 
-  const [bar, setBar]                   = useState<BarPublicInfo | null>(null)
-  const [credits, setCredits]           = useState(0)
+  const [bar, setBar]                           = useState<BarPublicInfo | null>(null)
+  const [credits, setCredits]                   = useState(0)
   const [midSessionBanned, setMidSessionBanned] = useState(false)
+  const [showInactivityWarning, setShowInactivityWarning] = useState(false)
 
   // Sync credits from session (initial load) ───────────────────────────────
   useEffect(() => {
@@ -106,6 +111,30 @@ export function TableProvider({ children }: { children: ReactNode }) {
     }
   }, [loading, session, pathname, router])
 
+  // Inactivity timeout ──────────────────────────────────────────────────────
+  const isPublicRoute = PUBLIC_ROUTES.some((r) => pathname.startsWith(r))
+
+  const handleInactivityTimeout = useCallback(() => {
+    setShowInactivityWarning(false)
+    clearTableSession()
+    router.replace('/no-session')
+  }, [router])
+
+  const handleInactivityWarning = useCallback(() => {
+    setShowInactivityWarning(true)
+  }, [])
+
+  const handleInactivityResume = useCallback(() => {
+    setShowInactivityWarning(false)
+  }, [])
+
+  useInactivityTimeout({
+    enabled: !loading && !!session && !isPublicRoute,
+    onTimeout: handleInactivityTimeout,
+    onWarning: handleInactivityWarning,
+    onResume:  handleInactivityResume,
+  })
+
   return (
     <TableContext.Provider
       value={{
@@ -118,6 +147,9 @@ export function TableProvider({ children }: { children: ReactNode }) {
       }}
     >
       {children}
+      {showInactivityWarning && (
+        <InactivityWarning onContinue={handleInactivityResume} />
+      )}
     </TableContext.Provider>
   )
 }

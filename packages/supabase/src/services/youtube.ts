@@ -1,3 +1,5 @@
+import { getSupabaseBrowserClient } from '../client'
+
 // ── Types ─────────────────────────────────────────────────────────────────────
 
 export interface YoutubeSongResult {
@@ -76,11 +78,37 @@ function cleanTitle(raw: string): string {
     .trim()
 }
 
+// ── DB cache helpers (fail-silent — nunca bloquean la búsqueda) ───────────────
+
+async function getDBCache(query: string): Promise<YoutubeSongResult[] | null> {
+  if (typeof window === 'undefined') return null
+  try {
+    const supabase = getSupabaseBrowserClient()
+    const { data } = await supabase.rpc('get_youtube_cache', { p_query: query })
+    return (data as YoutubeSongResult[] | null) ?? null
+  } catch {
+    return null
+  }
+}
+
+async function saveDBCache(query: string, results: YoutubeSongResult[]): Promise<void> {
+  if (typeof window === 'undefined') return
+  try {
+    const supabase = getSupabaseBrowserClient()
+    await supabase.rpc('upsert_youtube_cache', {
+      p_query:   query,
+      p_results: results,
+    })
+  } catch {
+    // Non-critical: el in-memory cache ya cubre sesiones cortas
+  }
+}
+
 // ── API calls ─────────────────────────────────────────────────────────────────
 
 /**
  * Busca canciones en YouTube Music.
- * Resultados cacheados en memoria por 5 minutos.
+ * Orden de caché: 1) in-memory (5 min) → 2) DB (24 h) → 3) YouTube API.
  */
 export async function searchSongs(
   query: string,
@@ -89,9 +117,19 @@ export async function searchSongs(
   if (!query.trim()) return []
 
   const cacheKey = `${query}:${maxResults}`
+
+  // 1. In-memory cache (más rápido, 5 min TTL)
   const cached = searchCache.get(cacheKey)
   if (cached && Date.now() < cached.expiresAt) return cached.data
 
+  // 2. DB cache (sobrevive reinicios del servidor, 24 h TTL)
+  const dbCached = await getDBCache(query)
+  if (dbCached) {
+    searchCache.set(cacheKey, { data: dbCached, expiresAt: Date.now() + CACHE_TTL_MS })
+    return dbCached
+  }
+
+  // 3. YouTube Data API
   const key = getApiKey()
   const url = new URL('https://www.googleapis.com/youtube/v3/search')
   url.searchParams.set('part', 'snippet')
@@ -125,7 +163,10 @@ export async function searchSongs(
     thumbnail: item.snippet.thumbnails.medium?.url ?? item.snippet.thumbnails.default?.url ?? '',
   }))
 
+  // Guardar en ambos caches (DB en background, no bloquea)
   searchCache.set(cacheKey, { data: results, expiresAt: Date.now() + CACHE_TTL_MS })
+  void saveDBCache(query, results)
+
   return results
 }
 

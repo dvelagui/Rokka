@@ -24,7 +24,7 @@ export interface ChatMessage {
   bar_id: string
   table_id: string | null
   message: string
-  message_type: 'msg' | 'admin' | 'reaction' | 'system'
+  message_type: 'msg' | 'admin' | 'reaction' | 'system' | 'clear'
   is_pinned: boolean
   created_at: string
 }

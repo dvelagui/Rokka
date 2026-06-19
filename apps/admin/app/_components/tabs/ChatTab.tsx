@@ -1,9 +1,10 @@
 'use client'
 
-import { useState, useEffect, useRef, useMemo, useCallback } from 'react'
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react'
 import {
   useRealtime,
   sendAdminMessage,
+  clearChat,
   updateBarConfig,
   addLogEntry,
 } from '@rokka/supabase'
@@ -37,9 +38,12 @@ export default function ChatTab() {
   const { bar, barConfig, admin, refreshBar } = useAdminContext()
   const { chat, tables }                      = useRealtime()
 
-  const [text,    setText]    = useState('')
-  const [sending, setSending] = useState(false)
-  const [history, setHistory] = useState<string[]>([])
+  const [text,           setText]           = useState('')
+  const [sending,        setSending]        = useState(false)
+  const [history,        setHistory]        = useState<string[]>([])
+  const [clearConfirm,   setClearConfirm]   = useState(false)
+  const [clearing,       setClearing]       = useState(false)
+  const clearConfirmRef = React.useRef<ReturnType<typeof setTimeout> | null>(null)
 
   // Init quick message history from persisted barConfig
   useEffect(() => {
@@ -97,6 +101,34 @@ export default function ChatTab() {
     void handleSend(text)
   }
 
+  const handleClearRequest = useCallback(() => {
+    setClearConfirm(true)
+    // Auto-cancel confirmation after 5 seconds
+    clearConfirmRef.current = setTimeout(() => setClearConfirm(false), 5_000)
+  }, [])
+
+  const handleClearConfirm = useCallback(async () => {
+    if (clearConfirmRef.current) clearTimeout(clearConfirmRef.current)
+    setClearConfirm(false)
+    if (!bar?.id || clearing) return
+    setClearing(true)
+    try {
+      await clearChat(bar.id)
+      await addLogEntry(bar.id, admin?.email ?? 'admin', 'clear_chat', 'Chat limpiado manualmente')
+    } catch (err) {
+      console.error('[ChatTab] clear failed:', err)
+    } finally {
+      setClearing(false)
+    }
+  }, [bar?.id, clearing, admin?.email])
+
+  // Limpiar timeout al desmontar
+  useEffect(() => {
+    return () => {
+      if (clearConfirmRef.current) clearTimeout(clearConfirmRef.current)
+    }
+  }, [])
+
   // ── Render ──────────────────────────────────────────────────────────────────
 
   return (
@@ -123,7 +155,40 @@ export default function ChatTab() {
 
       {/* Messages feed */}
       <div className="bg-card border border-[#1e1e1e] rounded-xl overflow-hidden">
-        <div className="h-[44vh] overflow-y-auto px-3 py-3 space-y-2">
+        {/* Feed header with clear button */}
+        <div className="flex items-center justify-between px-3 pt-2.5 pb-1">
+          <p className="text-[10px] font-bold uppercase tracking-widest text-white/30">
+            💬 Chat en vivo
+          </p>
+          {clearConfirm ? (
+            <div className="flex items-center gap-1.5">
+              <span className="text-[10px] text-white/40">¿Limpiar todo?</span>
+              <button
+                onClick={() => void handleClearConfirm()}
+                disabled={clearing}
+                className="text-[10px] font-semibold text-red-400 hover:text-red-300 transition-colors disabled:opacity-40"
+              >
+                Confirmar
+              </button>
+              <button
+                onClick={() => { clearTimeout(clearConfirmRef.current!); setClearConfirm(false) }}
+                className="text-[10px] text-white/30 hover:text-white/60 transition-colors"
+              >
+                Cancelar
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={handleClearRequest}
+              disabled={clearing || chat.messages.length === 0}
+              title="Limpiar historial del chat"
+              className="text-[10px] text-white/25 hover:text-red-400/70 transition-colors disabled:opacity-30"
+            >
+              🗑 Limpiar
+            </button>
+          )}
+        </div>
+        <div className="h-[40vh] overflow-y-auto px-3 pb-3 space-y-2">
           {chat.isLoading ? (
             <p className="text-center text-white/20 text-xs py-8">Cargando chat…</p>
           ) : chat.messages.length === 0 ? (
@@ -174,8 +239,8 @@ function MessageBubble({
   const time    = fmtTime(message.created_at)
   const isAdmin = message.message_type === 'admin'
 
-  // System messages: centered divider
-  if (message.message_type === 'system') {
+  // System / clear messages: centered divider
+  if (message.message_type === 'system' || message.message_type === 'clear') {
     return (
       <div className="flex items-center gap-2 my-1">
         <div className="flex-1 h-px bg-white/10" />

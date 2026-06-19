@@ -92,12 +92,12 @@ function MessageBubble({
     )
   }
 
-  // System message
-  if (msg.message_type === 'system') {
+  // System / clear message
+  if (msg.message_type === 'system' || msg.message_type === 'clear') {
     return (
       <div className="flex justify-center py-1">
         <span className="text-white/30 text-[10px] px-2 py-0.5 bg-card rounded-full">
-          ⚠️ Sistema · {msg.message}
+          {msg.message_type === 'clear' ? '🗑' : '⚠️'} {msg.message}
         </span>
       </div>
     )

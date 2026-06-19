@@ -170,11 +170,13 @@ export function YouTubePlayer({
     }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Player fills its container via absolute positioning (container must be relative)
+  // Player fills its container via absolute positioning (container must be relative).
+  // [&>iframe] targets the <iframe> that YT.Player inserts here, forcing it to
+  // fill the container and display as block (avoids inline-element sizing issues).
   return (
-    <div className="absolute inset-0">
+    <div className="absolute inset-0 [&>iframe]:absolute [&>iframe]:inset-0 [&>iframe]:w-full [&>iframe]:h-full [&>iframe]:block">
       {/* YT.Player replaces this element with an <iframe> */}
-      <div ref={containerRef} style={{ width: '100%', height: '100%' }} />
+      <div ref={containerRef} className="w-full h-full" />
     </div>
   )
 }

@@ -102,6 +102,13 @@ export async function sendAdminMessage(
   return data as ChatMessage
 }
 
+/** Limpiar todos los mensajes del bar (insertar marcador 'clear' para notificar en tiempo real). */
+export async function clearChat(barId: string): Promise<void> {
+  const supabase = getSupabaseBrowserClient()
+  const { error } = await supabase.rpc('clear_chat_messages', { p_bar_id: barId })
+  if (error) throw new Error(error.message)
+}
+
 /** Mensaje de admin fijado actualmente (null si no hay). */
 export async function getPinnedMessage(barId: string): Promise<ChatMessageWithLabel | null> {
   const supabase = getSupabaseBrowserClient()

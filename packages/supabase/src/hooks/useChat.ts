@@ -88,6 +88,15 @@ export function useChat(
         },
         (payload) => {
           const raw = payload.new as ChatMessage
+
+          // El RPC clear_chat_messages borra los mensajes viejos e inserta uno de tipo
+          // 'clear' como marcador. Al recibirlo, re-fetcheamos para mostrar el estado
+          // limpio en lugar de acumular sobre los mensajes que aún están en memoria.
+          if (raw.message_type === 'clear') {
+            void fetchInitial()
+            return
+          }
+
           const withLabel: ChatMessageWithLabel = {
             ...raw,
             table_label:
