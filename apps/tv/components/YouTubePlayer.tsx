@@ -36,6 +36,7 @@ interface YTPlayer {
   unMute: () => void
   destroy: () => void
   getPlayerState: () => number
+  getIframe: () => HTMLIFrameElement
 }
 
 // ── Singleton API loader ──────────────────────────────────────────────────────
@@ -146,6 +147,24 @@ export function YouTubePlayer({
         events: {
           onReady: (e) => {
             e.target.setVolume(100)
+
+            // Cover technique: make the iframe fill the container at 16:9,
+            // centering and clipping excess (the parent has overflow:hidden).
+            // This eliminates black bars when the container isn't exactly 16:9
+            // (e.g. viewport minus the header bar).
+            const iframe = e.target.getIframe()
+            Object.assign(iframe.style, {
+              position:  'absolute',
+              top:       '50%',
+              left:      '50%',
+              transform: 'translate(-50%, -50%)',
+              minWidth:  '100%',
+              minHeight: '100%',
+              aspectRatio: '16 / 9',
+              border:    '0',
+              display:   'block',
+            })
+
             if (pendingVideoRef.current) {
               e.target.loadVideoById(pendingVideoRef.current)
             }
@@ -170,12 +189,11 @@ export function YouTubePlayer({
     }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Player fills its container via absolute positioning (container must be relative).
-  // [&>iframe] targets the <iframe> that YT.Player inserts here, forcing it to
-  // fill the container and display as block (avoids inline-element sizing issues).
+  // overflow-hidden is required: the iframe is made larger than the container
+  // (cover technique) and the excess is clipped to eliminate black bars.
   return (
-    <div className="absolute inset-0 [&>iframe]:absolute [&>iframe]:inset-0 [&>iframe]:w-full [&>iframe]:h-full [&>iframe]:block">
-      {/* YT.Player replaces this element with an <iframe> */}
+    <div className="absolute inset-0 overflow-hidden">
+      {/* YT.Player replaces this div with an <iframe>; onReady applies cover CSS. */}
       <div ref={containerRef} className="w-full h-full" />
     </div>
   )
