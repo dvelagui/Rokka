@@ -328,14 +328,37 @@ export function ChatTab() {
     [chat],
   )
 
+  // Pinned message shown as sticky banner; exclude it from the regular feed
+  const pinnedMessage  = chat.pinnedMessage
+  const feedMessages   = chat.messages.filter((m) => !m.is_pinned)
+
   return (
     <div className="flex flex-col h-full">
       <ChatHeader />
 
       <ReactionBar onReact={handleReact} disabled={isBanned} />
 
+      {/* Pinned admin message — fixed at the top of the chat */}
+      <AnimatePresence>
+        {pinnedMessage && (
+          <motion.div
+            key={pinnedMessage.id}
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="shrink-0 overflow-hidden"
+          >
+            <div className="flex items-start gap-2 bg-rokka-cyan/10 border-b border-rokka-cyan/20 px-3 py-2">
+              <span className="text-sm leading-none mt-0.5 shrink-0">📌</span>
+              <p className="text-rokka-cyan text-xs leading-relaxed flex-1">{pinnedMessage.message}</p>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <MessageFeed
-        messages={chat.messages}
+        messages={feedMessages}
         tableId={table?.tableId ?? ''}
       />
 

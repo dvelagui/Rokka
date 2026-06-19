@@ -92,11 +92,15 @@ function bubbleClass(seed: string): string {
 function ChatPanel({
   messages,
   tableLabels,
+  pinnedMessage,
 }: {
   messages: ChatMessage[]
   tableLabels: Map<string, string>
+  pinnedMessage: ChatMessage | null
 }) {
-  const visible = messages.slice(-20)
+  const visible = messages
+    .filter((m) => !m.is_pinned)
+    .slice(-20)
   const bottomRef = useRef<HTMLDivElement | null>(null)
 
   useEffect(() => {
@@ -104,51 +108,78 @@ function ChatPanel({
   }, [visible.length])
 
   return (
-    <div className="h-full flex flex-col justify-end overflow-hidden pointer-events-none">
-      <div className="flex flex-col justify-end gap-2 [scrollbar-width:none] overflow-hidden">
-        {visible.length > 0 && (
-          <AnimatePresence mode="popLayout" initial={false}>
-            {visible.map((msg) => (
-              <motion.div
-                key={msg.id}
-                layout
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, height: 0, overflow: 'hidden', marginBottom: 0 }}
-                transition={{ duration: 0.3 }}
-              >
-                {msg.message_type === 'reaction' ? (
-                  <span className="block text-right text-3xl leading-none drop-shadow-lg">
-                    {msg.message}
-                  </span>
-                ) : (
-                  <div
-                    className={`ml-auto max-w-full rounded-2xl px-3 py-1.5 shadow-lg backdrop-blur-sm ${
-                      msg.message_type === 'admin' ? 'bg-rokka-cyan/10' : bubbleClass(msg.table_id ?? msg.id)
-                    }`}
-                  >
-                    <p
-                      className="text-[10px] font-bold uppercase tracking-wide leading-none mb-0.5 text-white/80"
-                      style={{ textShadow: '0 1px 2px rgba(0,0,0,0.4)' }}
-                    >
-                      {msg.message_type === 'admin'
-                        ? '🎛 DJ'
-                        : (msg.table_id && tableLabels.get(msg.table_id)) || 'Mesa'}{' '}
-                      · {formatChatTime(msg.created_at)}
-                    </p>
-                    <p
-                      className="text-white text-sm font-semibold leading-snug break-words"
-                      style={{ textShadow: '0 1px 3px rgba(0,0,0,0.5)' }}
-                    >
-                      {msg.message}
-                    </p>
-                  </div>
-                )}
-              </motion.div>
-            ))}
-          </AnimatePresence>
+    <div className="h-full flex flex-col overflow-hidden pointer-events-none">
+
+      {/* Pinned message — sticky top */}
+      <AnimatePresence>
+        {pinnedMessage && (
+          <motion.div
+            key={pinnedMessage.id}
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.25 }}
+            className="shrink-0 flex items-start gap-2 bg-rokka-cyan/15 border border-rokka-cyan/25
+                       rounded-xl px-3 py-2 mb-2 backdrop-blur-sm"
+          >
+            <span className="text-sm leading-none mt-0.5 shrink-0">📌</span>
+            <p
+              className="text-rokka-cyan text-xs font-semibold leading-snug flex-1 break-words"
+              style={{ textShadow: '0 1px 3px rgba(0,0,0,0.6)' }}
+            >
+              {pinnedMessage.message}
+            </p>
+          </motion.div>
         )}
-        <div ref={bottomRef} />
+      </AnimatePresence>
+
+      {/* Regular messages — scroll to bottom */}
+      <div className="flex-1 flex flex-col justify-end overflow-hidden">
+        <div className="flex flex-col justify-end gap-2 [scrollbar-width:none] overflow-hidden">
+          {visible.length > 0 && (
+            <AnimatePresence mode="popLayout" initial={false}>
+              {visible.map((msg) => (
+                <motion.div
+                  key={msg.id}
+                  layout
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, height: 0, overflow: 'hidden', marginBottom: 0 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  {msg.message_type === 'reaction' ? (
+                    <span className="block text-right text-3xl leading-none drop-shadow-lg">
+                      {msg.message}
+                    </span>
+                  ) : (
+                    <div
+                      className={`ml-auto max-w-full rounded-2xl px-3 py-1.5 shadow-lg backdrop-blur-sm ${
+                        msg.message_type === 'admin' ? 'bg-rokka-cyan/10' : bubbleClass(msg.table_id ?? msg.id)
+                      }`}
+                    >
+                      <p
+                        className="text-[10px] font-bold uppercase tracking-wide leading-none mb-0.5 text-white/80"
+                        style={{ textShadow: '0 1px 2px rgba(0,0,0,0.4)' }}
+                      >
+                        {msg.message_type === 'admin'
+                          ? '🎛 DJ'
+                          : (msg.table_id && tableLabels.get(msg.table_id)) || 'Mesa'}{' '}
+                        · {formatChatTime(msg.created_at)}
+                      </p>
+                      <p
+                        className="text-white text-sm font-semibold leading-snug break-words"
+                        style={{ textShadow: '0 1px 3px rgba(0,0,0,0.5)' }}
+                      >
+                        {msg.message}
+                      </p>
+                    </div>
+                  )}
+                </motion.div>
+              ))}
+            </AnimatePresence>
+          )}
+          <div ref={bottomRef} />
+        </div>
       </div>
     </div>
   )
@@ -524,7 +555,7 @@ function TVDisplay() {
             {/* 2b. Votación en vivo — parte superior central */}
             <VotingOverlay keepVotes={votes.keepVotes} skipVotes={votes.skipVotes} />
 
-            {/* 3. Right column overlay — chat (40%) + queue (60%) ────────── */}
+            {/* 3. Right column overlay — chat (50%) + queue (50%) ────────── */}
             <div
               className="absolute z-20 flex flex-col gap-2"
               style={{
@@ -534,10 +565,14 @@ function TVDisplay() {
                 width: 'clamp(220px, 20vw, 360px)',
               }}
             >
-              <div style={{ height: '40%' }} className="overflow-hidden">
-                <ChatPanel messages={allMessages} tableLabels={tableLabels} />
+              <div style={{ height: '50%' }} className="overflow-hidden">
+                <ChatPanel
+                  messages={allMessages}
+                  tableLabels={tableLabels}
+                  pinnedMessage={pinnedMessage}
+                />
               </div>
-              <div style={{ height: '60%' }} className="overflow-hidden">
+              <div style={{ height: '50%' }} className="overflow-hidden">
                 <QueueColumn queue={queue.queue} />
               </div>
             </div>

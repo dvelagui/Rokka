@@ -250,7 +250,7 @@ export function VotingSection({ currentQueueId, barId, tableId }: VotingSectionP
                         `}
             >
               <span className="text-base">⏭</span>
-              Skip
+              Quitar
               {myVote === 'skip' && (
                 <motion.span
                   initial={{ scale: 0 }}
