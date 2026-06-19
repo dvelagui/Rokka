@@ -132,8 +132,8 @@ export function YouTubePlayer({
 
       playerRef.current = new window.YT.Player(el, {
         videoId: pendingVideoRef.current ?? '',
-        width: '100%',
-        height: '100%',
+        width: 1920,   // explicit 16:9 — avoids YT.Player capturing a 0×0 container
+        height: 1080,  // also hints YouTube to prepare HD quality
         playerVars: {
           autoplay: 1,
           controls: 0,
@@ -148,19 +148,19 @@ export function YouTubePlayer({
           onReady: (e) => {
             e.target.setVolume(100)
 
-            // Cover technique: make the iframe fill the container at 16:9,
-            // centering and clipping excess (the parent has overflow:hidden).
-            // This eliminates black bars when the container isn't exactly 16:9
-            // (e.g. viewport minus the header bar).
+            // Cover technique: force the iframe to fill the full viewport width
+            // at 16:9 ratio, centered. The parent has overflow:hidden so any
+            // vertical excess (e.g. when header reduces container height) is clipped.
+            // We use 100vw because the TV layout overlays the right column on top
+            // of the video — no horizontal constraint exists.
             const iframe = e.target.getIframe()
             Object.assign(iframe.style, {
               position:  'absolute',
               top:       '50%',
               left:      '50%',
               transform: 'translate(-50%, -50%)',
-              minWidth:  '100%',
-              minHeight: '100%',
-              aspectRatio: '16 / 9',
+              width:     '100vw',
+              height:    'calc(100vw * 0.5625)', // 16:9 from viewport width
               border:    '0',
               display:   'block',
             })
